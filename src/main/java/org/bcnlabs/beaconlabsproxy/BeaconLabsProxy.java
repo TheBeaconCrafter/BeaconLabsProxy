@@ -1,5 +1,6 @@
 package org.bcnlabs.beaconlabsproxy;
 
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
@@ -15,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 
 public final class BeaconLabsProxy extends Plugin {
 
-    public String prefix = "[BeaconLabs]";
+    private String prefix = "[BeaconLabs]";
     private File file;
     private Configuration configuration;
 
@@ -28,30 +29,38 @@ public final class BeaconLabsProxy extends Plugin {
         setInstance(this);
 
         getLogger().info("BeaconLabs Proxy system was enabled.");
+
+        // Register commands and other initialization
         getProxy().getPluginManager().registerCommand(this, new PingCommand(this));
         getProxy().getPluginManager().registerCommand(this, new KickCommand(this));
+        getProxy().getPluginManager().registerCommand(this, new TeamChatCommand(this));
+        getProxy().getPluginManager().registerCommand(this, new GotoCommand(this));
 
-        file = new File(ProxyServer.getInstance().getPluginsFolder() + "/BeaconLabs/config.yml");
-        File parentDir = file.getParentFile();
+        // Set up configuration file
+        file = new File(ProxyServer.getInstance().getPluginsFolder(), "BeaconLabs/config.yml");
 
         try {
-            if (!parentDir.exists()) {
-                parentDir.mkdirs();  // Create the directories if they do not exist
-            }
             if (!file.exists()) {
-                file.createNewFile();
-            }
-            configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+                file.getParentFile().mkdirs();  // Ensure parent directories exist
+                file.createNewFile();  // Create new config file if it doesn't exist
 
-            if (!configuration.contains("webhook.url")) {
+                // Load default configuration and save it
+                configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+                configuration.set("prefix", "&6[BeaconLabs]&r ");
+                configuration.set("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\n&6Our website: example.com");
                 configuration.set("webhook.url", "https://your-discord-webhook-url");
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
             }
 
+            // Load configuration
+            configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+            prefix = ChatColor.translateAlternateColorCodes('&', configuration.getString("prefix", "&6[BeaconLabs]&r "));
             webhookUrl = configuration.getString("webhook.url");
+
             getLogger().info("Webhook URL loaded: " + webhookUrl);
 
         } catch (IOException e) {
+            getLogger().severe("Error loading configuration: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -71,6 +80,10 @@ public final class BeaconLabsProxy extends Plugin {
 
     private static void setInstance(BeaconLabsProxy instance) {
         BeaconLabsProxy.instance = instance;
+    }
+
+    public String getKickMessageFormat() {
+        return configuration.getString("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\nAppeal on our website: %s");
     }
 
     public void sendDiscordWebhook(String username, String reason, String duration, String sender, String timestamp) {

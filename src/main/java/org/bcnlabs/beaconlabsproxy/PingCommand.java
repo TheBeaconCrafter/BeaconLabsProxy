@@ -22,7 +22,7 @@ public class PingCommand extends Command {
             int ping = player.getPing();
             String prefix = plugin.getPrefix();
 
-            player.sendMessage(new TextComponent(ChatColor.GRAY + prefix + " Your ping is: " + ChatColor.GREEN + ping + ChatColor.GRAY + "ms."));
+            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GRAY + "Your ping is " + ChatColor.GREEN + ping + ChatColor.GRAY + " ms."));
         }
     }
 }

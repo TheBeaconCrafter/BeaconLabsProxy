@@ -1,0 +1,3 @@
+name: BeaconLabsProxy
+version: '${project.version}'
+main: org.bcnlabs.beaconlabsproxy.BeaconLabsProxy

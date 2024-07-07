@@ -2,10 +2,14 @@ package org.bcnlabs.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+import net.md_5.bungee.api.event.PostLoginEvent;
+import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
+import net.md_5.bungee.event.EventHandler;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,8 +17,11 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
-public final class BeaconLabsProxy extends Plugin {
+public final class BeaconLabsProxy extends Plugin implements Listener {
 
     private String prefix = "[BeaconLabs]";
     private File file;
@@ -22,7 +29,8 @@ public final class BeaconLabsProxy extends Plugin {
 
     private static BeaconLabsProxy instance;
 
-    private String webhookUrl;
+    public String webhookUrl;
+    private final Map<UUID, BanEntry> bannedPlayers = new HashMap<>();  // Map to store banned players
 
     @Override
     public void onEnable() {
@@ -30,18 +38,25 @@ public final class BeaconLabsProxy extends Plugin {
 
         getLogger().info("BeaconLabs Proxy system was enabled.");
 
+        loadBanData();
+
         // Register commands and other initialization
-        getProxy().getPluginManager().registerCommand(this, new PingCommand(this));
-        getProxy().getPluginManager().registerCommand(this, new KickCommand(this));
-        getProxy().getPluginManager().registerCommand(this, new TeamChatCommand(this));
-        getProxy().getPluginManager().registerCommand(this, new GotoCommand(this));
-        getProxy().getPluginManager().registerCommand(this, new MsgCommand(this));
-        getProxy().getPluginManager().registerCommand(this, new InfoCommand(this));
+        ProxyServer proxy = ProxyServer.getInstance();
+        proxy.getPluginManager().registerCommand(this, new PingCommand(this));
+        proxy.getPluginManager().registerCommand(this, new KickCommand(this));
+        proxy.getPluginManager().registerCommand(this, new BanCommand(this));
+        proxy.getPluginManager().registerCommand(this, new UnbanCommand(this));
+        proxy.getPluginManager().registerCommand(this, new TeamChatCommand(this));
+        proxy.getPluginManager().registerCommand(this, new BroadcastCommand(this));
+        proxy.getPluginManager().registerCommand(this, new GotoCommand(this));
+        proxy.getPluginManager().registerCommand(this, new MsgCommand(this));
+        proxy.getPluginManager().registerCommand(this, new InfoCommand(this));
+        proxy.getPluginManager().registerCommand(this, new StaffCommand(this));
 
         getLogger().info("All commands were registered.");
 
         // Set up configuration file
-        file = new File(ProxyServer.getInstance().getPluginsFolder(), "BeaconLabs/config.yml");
+        file = new File(getDataFolder(), "config.yml");
 
         try {
             if (!file.exists()) {
@@ -67,6 +82,9 @@ public final class BeaconLabsProxy extends Plugin {
             getLogger().severe("Error loading configuration: " + e.getMessage());
             e.printStackTrace();
         }
+
+        // Register event listeners
+        proxy.getPluginManager().registerListener(this, this);
     }
 
     @Override
@@ -86,65 +104,76 @@ public final class BeaconLabsProxy extends Plugin {
         BeaconLabsProxy.instance = instance;
     }
 
+    // Getter for bannedPlayers map
+    public Map<UUID, BanEntry> getBannedPlayers() {
+        return bannedPlayers;
+    }
+
+    private void loadBanData() {
+        File bansFile = new File(getDataFolder(), "bans.yml");
+
+        try {
+            if (!bansFile.exists()) {
+                bansFile.createNewFile();
+            }
+
+            Configuration config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(bansFile);
+
+            for (String key : config.getKeys()) {
+                UUID uuid = UUID.fromString(key);
+                String playerName = config.getString(key + ".playerName");
+                String reason = config.getString(key + ".reason");
+
+                bannedPlayers.put(uuid, new BanEntry(reason));
+            }
+
+            getLogger().info("bannedPlayers: " + bannedPlayers);
+        } catch (IOException e) {
+            getLogger().severe("Error loading bans.yml: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     public String getKickMessageFormat() {
         return configuration.getString("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\nAppeal on our website: %s");
     }
 
-    public void sendDiscordWebhook(String username, String reason, String duration, String sender, String timestamp) {
-        try {
-            URL url = new URL(webhookUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json; utf-8");
-            connection.setDoOutput(true);
+    // Event listener for handling PostLoginEvent
+    @EventHandler
+    public void onJoin(PostLoginEvent event) {
+        loadBanData();
 
-            String jsonPayload = String.format(
-                    "{\n" +
-                            "  \"embeds\": [\n" +
-                            "    {\n" +
-                            "      \"title\": \"Punishment\",\n" +
-                            "      \"color\": 14177041,\n" +
-                            "      \"fields\": [\n" +
-                            "        {\n" +
-                            "          \"name\": \"Username\",\n" +
-                            "          \"value\": \"%s\",\n" +
-                            "          \"inline\": true\n" +
-                            "        },\n" +
-                            "        {\n" +
-                            "          \"name\": \"Reason\",\n" +
-                            "          \"value\": \"%s\",\n" +
-                            "          \"inline\": true\n" +
-                            "        },\n" +
-                            "        {\n" +
-                            "          \"name\": \"Duration\",\n" +
-                            "          \"value\": \"%s\",\n" +
-                            "          \"inline\": true\n" +
-                            "        },\n" +
-                            "        {\n" +
-                            "          \"name\": \"From\",\n" +
-                            "          \"value\": \"%s\"\n" +
-                            "        },\n" +
-                            "        {\n" +
-                            "          \"name\": \"Timestamp\",\n" +
-                            "          \"value\": \"%s\"\n" +
-                            "        }\n" +
-                            "      ]\n" +
-                            "    }\n" +
-                            "  ]\n" +
-                            "}", username, reason, duration, sender, timestamp);
+        ProxiedPlayer player = event.getPlayer();
+        UUID uuid = player.getUniqueId();
 
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
+        getLogger().info("A player joined");
+        getLogger().info("has UUID " + uuid);
 
-            int responseCode = connection.getResponseCode();
-            if (responseCode != 204) {
-                getLogger().warning("Failed to send webhook: " + responseCode);
-            }
+        if (isPlayerBanned(uuid)) {
+            getLogger().info("Player is banned");
+            String kickMessage = String.format(getKickMessageFormat(), bannedPlayers.get(uuid).getReason(), "example.com");
+            player.disconnect(ChatColor.translateAlternateColorCodes('&', kickMessage));
+        } else {
+            getLogger().info("Player isn't banned");
+        }
+    }
 
-        } catch (Exception e) {
-            getLogger().warning("Error while sending webhook: " + e.getMessage());
+
+    // Check if a player is banned
+    private boolean isPlayerBanned(UUID uuid) {
+        return bannedPlayers.containsKey(uuid);
+    }
+
+    // Inner class representing a ban entry
+    static class BanEntry {
+        private final String reason;
+
+        public BanEntry(String reason) {
+            this.reason = reason;
+        }
+
+        public String getReason() {
+            return reason;
         }
     }
 }

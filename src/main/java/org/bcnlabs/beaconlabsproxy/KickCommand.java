@@ -15,11 +15,13 @@ import java.time.format.DateTimeFormatter;
 public class KickCommand extends Command {
 
     private final BeaconLabsProxy plugin;
+    private final Webhooks webhooks;
     private static final String PERMISSION = "beaconlabs.kick";  // Define the required permission
 
     public KickCommand(BeaconLabsProxy plugin) {
         super("kick");
         this.plugin = plugin;
+        this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
@@ -64,7 +66,7 @@ public class KickCommand extends Command {
             // Log the kick event to Discord webhook
             String senderName = commandSender.getName();
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss"));
-            plugin.sendDiscordWebhook(playerName, reason, "Kick", senderName, timestamp);
+            webhooks.sendKickWebhook(playerName, reason, senderName, timestamp);
         } else {
             commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player does not exist."));
         }

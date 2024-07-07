@@ -35,6 +35,7 @@ public final class BeaconLabsProxy extends Plugin {
         getProxy().getPluginManager().registerCommand(this, new KickCommand(this));
         getProxy().getPluginManager().registerCommand(this, new TeamChatCommand(this));
         getProxy().getPluginManager().registerCommand(this, new GotoCommand(this));
+        getProxy().getPluginManager().registerCommand(this, new MsgCommand(this));
 
         // Set up configuration file
         file = new File(ProxyServer.getInstance().getPluginsFolder(), "BeaconLabs/config.yml");

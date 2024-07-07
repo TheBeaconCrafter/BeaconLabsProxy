@@ -39,6 +39,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         getLogger().info("BeaconLabs Proxy system was enabled.");
 
         loadBanData();
+        Database.initialize();
 
         // Register commands and other initialization
         ProxyServer proxy = ProxyServer.getInstance();
@@ -46,12 +47,17 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new KickCommand(this));
         proxy.getPluginManager().registerCommand(this, new BanCommand(this));
         proxy.getPluginManager().registerCommand(this, new UnbanCommand(this));
+        proxy.getPluginManager().registerCommand(this, new UnbanIDCommand(this));
         proxy.getPluginManager().registerCommand(this, new TeamChatCommand(this));
         proxy.getPluginManager().registerCommand(this, new BroadcastCommand(this));
         proxy.getPluginManager().registerCommand(this, new GotoCommand(this));
         proxy.getPluginManager().registerCommand(this, new MsgCommand(this));
         proxy.getPluginManager().registerCommand(this, new InfoCommand(this));
         proxy.getPluginManager().registerCommand(this, new StaffCommand(this));
+        proxy.getPluginManager().registerCommand(this, new UidLookup(this));
+        proxy.getPluginManager().registerCommand(this, new ReportCommand(this));
+        proxy.getPluginManager().registerCommand(this, new ViewReportsCommand(this));
+        proxy.getPluginManager().registerCommand(this, new ClosereportCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -66,6 +72,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
                 // Load default configuration and save it
                 configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
                 configuration.set("prefix", "&6[BeaconLabs]&r ");
+                configuration.set("ban-message-format", "&cYou are banned from BeaconLabs\nReason: %s\n&6Our website: example.com");
                 configuration.set("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\n&6Our website: example.com");
                 configuration.set("webhook.url", "https://your-discord-webhook-url");
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
@@ -138,6 +145,10 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         return configuration.getString("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\nAppeal on our website: %s");
     }
 
+    public String getBanMessageFormat() {
+        return configuration.getString("ban-message-format", "&cYou are banned from BeaconLabs\nReason: %s\n&6Our website: example.com");
+    }
+
     // Event listener for handling PostLoginEvent
     @EventHandler
     public void onJoin(PostLoginEvent event) {
@@ -151,8 +162,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
         if (isPlayerBanned(uuid)) {
             getLogger().info("Player is banned");
-            String kickMessage = String.format(getKickMessageFormat(), bannedPlayers.get(uuid).getReason(), "example.com");
-            player.disconnect(ChatColor.translateAlternateColorCodes('&', kickMessage));
+            String banMessage = String.format(getBanMessageFormat(), bannedPlayers.get(uuid).getReason());
+            player.disconnect(ChatColor.translateAlternateColorCodes('&', banMessage));
         } else {
             getLogger().info("Player isn't banned");
         }

@@ -14,7 +14,7 @@ public class StaffCommand extends Command {
     private final BeaconLabsProxy plugin;
 
     public StaffCommand(BeaconLabsProxy plugin) {
-        super("staff", null, "liststaff");
+        super("staff", null, "team");
         this.plugin = plugin;
     }
 

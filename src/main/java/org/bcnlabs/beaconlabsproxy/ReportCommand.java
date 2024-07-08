@@ -6,16 +6,21 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-public class ReportCommand extends Command {
+public class ReportCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
     private static final String PERMISSION = "beaconlabs.report";
+
+    private static final List<String> REASONS = Arrays.asList("HACKING", "SPAMMING", "INSULT", "CHATABUSE", "AUTOCLICKER");
 
     public ReportCommand(BeaconLabsProxy plugin) {
         super("report");
@@ -39,7 +44,7 @@ public class ReportCommand extends Command {
         String reason = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            try (Connection conn = Database.getConnection()) {
+            try (Connection conn = DatabaseReports.getConnection()) {
                 String sql = "INSERT INTO reports (reporter, reported, reason) VALUES (?, ?, ?)";
                 try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                     stmt.setString(1, player.getName());
@@ -60,5 +65,18 @@ public class ReportCommand extends Command {
             }
         });
     }
-}
 
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) {
+            List<String> playerNames = new ArrayList<>();
+            for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+                playerNames.add(p.getName());
+            }
+            return playerNames;
+        } else if (args.length == 2) {
+            return REASONS;
+        }
+        return new ArrayList<>();
+    }
+}

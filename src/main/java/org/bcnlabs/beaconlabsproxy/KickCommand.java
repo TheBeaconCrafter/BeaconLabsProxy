@@ -3,8 +3,6 @@ package org.bcnlabs.beaconlabsproxy;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
@@ -53,22 +51,25 @@ public class KickCommand extends Command {
             BaseComponent[] kickMessage = TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', formattedKickMessage));
             playerToKick.disconnect(kickMessage);
 
+            // Log the kick event to Discord webhook
+            String senderName = commandSender.getName();
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            webhooks.sendKickWebhook(playerName, reason, senderName, timestamp);
+
+            // Add kick punishment to database
+            PunishmentManager.addPunishment(playerToKick.getUniqueId().toString(), playerToKick.getName(), senderName, "Kick", reason, 0);
+
             // Broadcast kick message to players with beaconlabs.staff.read.kick permission
             for (ProxiedPlayer onlinePlayer : plugin.getProxy().getPlayers()) {
                 if (onlinePlayer.hasPermission("beaconlabs.staff.read.kick")) {
-                    onlinePlayer.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + playerName + ChatColor.GRAY + " was kicked for " + ChatColor.RED + reason + ChatColor.GRAY + " by " + ChatColor.GOLD + commandSender.getName() + ChatColor.GRAY + "."));
+                    onlinePlayer.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + playerName + ChatColor.GRAY + " was kicked for " + ChatColor.RED + reason + ChatColor.GRAY + " by " + ChatColor.GOLD + senderName + ChatColor.GRAY + "."));
                 }
             }
 
             // Send message to command sender
             commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You kicked " + playerName + " for " + reason));
-
-            // Log the kick event to Discord webhook
-            String senderName = commandSender.getName();
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss"));
-            webhooks.sendKickWebhook(playerName, reason, senderName, timestamp);
         } else {
-            commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player does not exist."));
+            commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player does not exist or is offline."));
         }
     }
 }

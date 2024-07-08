@@ -7,19 +7,16 @@ import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import java.util.UUID;
 
 public class UnbanCommand extends Command {
@@ -59,11 +56,8 @@ public class UnbanCommand extends Command {
                     return;
                 }
 
-                // Remove ban
-                removeBan(uuid);
-
-                // Remove ban from bans.yml file
-                removeFromBanFile(uuid);
+                // Remove ban from database and update original ban record
+                unbanPlayer(uuid, player.getName()); // Pass player's name who executed the unban
 
                 webhooks.sendUnbanWebhook(playerName, player.getName(), LocalDateTime.now().format(formatter));
 
@@ -79,7 +73,7 @@ public class UnbanCommand extends Command {
                 player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Player " + playerName + " has been unbanned."));
 
             } catch (Exception e) {
-                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while fetching the UUID: " + e.getMessage()));
+                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while unbanning player: " + e.getMessage()));
                 e.printStackTrace();
             }
         });
@@ -113,24 +107,32 @@ public class UnbanCommand extends Command {
         return UUID.fromString(formattedUUID);
     }
 
-    // Method to remove ban from the in-memory map
-    private void removeBan(UUID uuid) {
-        Map<UUID, BeaconLabsProxy.BanEntry> bannedPlayers = plugin.getBannedPlayers();
-        if (bannedPlayers != null) {
-            bannedPlayers.remove(uuid);
-        }
-    }
+    // Method to unban player (update original ban record and insert unban record)
+    private void unbanPlayer(UUID uuid, String punisherName) {
+        try (Connection conn = DatabasePunishments.getConnection()) {
+            LocalDateTime now = LocalDateTime.now();
 
-    // Method to remove ban from bans.yml file
-    private void removeFromBanFile(UUID uuid) {
-        File bansFile = new File(plugin.getDataFolder(), "bans.yml");
+            // Update end_time to start_time for existing ban
+            String updateSql = "UPDATE punishments SET end_time = start_time WHERE player_uuid = ? AND type = 'ban'";
+            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                updateStmt.setString(1, uuid.toString());
+                updateStmt.executeUpdate();
+            }
 
-        try {
-            Configuration config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(bansFile);
-            config.set(uuid.toString(), null); // Remove ban entry from config
-            ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, bansFile);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Error removing ban from bans.yml: " + e.getMessage());
+            // Insert unban record
+            String insertSql = "INSERT INTO punishments (player_uuid, punisher, type, reason, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                insertStmt.setString(1, uuid.toString());
+                insertStmt.setString(2, punisherName); // Use the name of the player who executed the unban
+                insertStmt.setString(3, "Unban");
+                insertStmt.setString(4, "Player unbanned");
+                insertStmt.setString(5, now.format(formatter));
+                insertStmt.setString(6, now.format(formatter)); // End time same as start time for unban
+                insertStmt.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error while updating/unbanning player: " + e.getMessage());
             e.printStackTrace();
         }
     }

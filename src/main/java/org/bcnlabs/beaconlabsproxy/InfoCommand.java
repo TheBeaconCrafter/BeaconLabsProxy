@@ -2,16 +2,21 @@ package org.bcnlabs.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 
-public class InfoCommand extends Command {
+import java.util.ArrayList;
+import java.util.List;
+
+public class InfoCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
-    private static final String PERMISSION = "beaconlabs.info";  // Define the required permission
+    private static final String PERMISSION = "beaconlabs.info";
 
     public InfoCommand(BeaconLabsProxy plugin) {
         super("info", "", "check");
@@ -27,7 +32,6 @@ public class InfoCommand extends Command {
 
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
 
-        // Check if the player has the required permission
         if (!player.hasPermission(PERMISSION)) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
             return;
@@ -46,16 +50,13 @@ public class InfoCommand extends Command {
             return;
         }
 
-        // Gather information about the target player
-        String ipAddress = targetPlayer.getSocketAddress().toString();  // This needs appropriate formatting for IPv6
+        String ipAddress = targetPlayer.getSocketAddress().toString();
         String serverName = targetPlayer.getServer() != null ? targetPlayer.getServer().getInfo().getName() : "Not connected to any server";
 
-        // Construct the info message
         TextComponent infoMessage = new TextComponent(ChatColor.YELLOW + "Information about " + targetPlayer.getName() + ":\n");
         infoMessage.addExtra(ChatColor.YELLOW + "Display Name: " + ChatColor.WHITE + targetPlayer.getDisplayName() + "\n");
         infoMessage.addExtra(ChatColor.YELLOW + "UUID: ");
 
-        // Make UUID clickable and copyable
         TextComponent uuidComponent = new TextComponent(ChatColor.WHITE + targetPlayer.getUniqueId().toString());
         uuidComponent.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, targetPlayer.getUniqueId().toString()));
         uuidComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(ChatColor.GRAY + "Click to copy UUID")}));
@@ -67,7 +68,6 @@ public class InfoCommand extends Command {
         infoMessage.addExtra(ChatColor.YELLOW + "View Distance: " + ChatColor.WHITE + targetPlayer.getViewDistance() + "\n");
         infoMessage.addExtra(ChatColor.YELLOW + "Main Hand: " + ChatColor.WHITE + targetPlayer.getMainHand() + "\n");
 
-        // Make IP address clickable
         TextComponent ipComponent = new TextComponent(ChatColor.YELLOW + "IP Address: " + ChatColor.WHITE + ipAddress + "\n");
         ipComponent.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, ipAddress));
         ipComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent(ChatColor.GRAY + "Click to copy IP address")}));
@@ -76,16 +76,26 @@ public class InfoCommand extends Command {
         infoMessage.addExtra(ChatColor.YELLOW + "Ping: " + ChatColor.WHITE + targetPlayer.getPing() + "\n");
         infoMessage.addExtra(ChatColor.YELLOW + "Current Server: ");
 
-        // Make server name clickable if player is on a server
         if (targetPlayer.getServer() != null) {
             TextComponent serverNameComponent = new TextComponent(ChatColor.AQUA + serverName);
-            serverNameComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/server " + serverName));  // Change to appropriate server command
+            serverNameComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/server " + serverName));
             infoMessage.addExtra(serverNameComponent);
         } else {
             infoMessage.addExtra(ChatColor.WHITE + serverName);
         }
 
-        // Send the info message to the player
         player.sendMessage(infoMessage);
+    }
+
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) {
+            List<String> playerNames = new ArrayList<>();
+            for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+                playerNames.add(p.getName());
+            }
+            return playerNames;
+        }
+        return new ArrayList<>();
     }
 }

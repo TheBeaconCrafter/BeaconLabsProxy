@@ -38,7 +38,7 @@ public class ClosereportCommand extends Command {
             int id = Integer.parseInt(args[0]);
 
             plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-                try (Connection conn = Database.getConnection()) {
+                try (Connection conn = DatabaseReports.getConnection()) {
                     if (conn != null && conn.isValid(3)) { // Check if the connection is valid within 3 seconds
                         String sql = "DELETE FROM reports WHERE id = ?";
                         try (PreparedStatement stmt = conn.prepareStatement(sql)) {

@@ -13,10 +13,14 @@ import net.md_5.bungee.event.EventHandler;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +33,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
     private static BeaconLabsProxy instance;
 
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     public String webhookUrl;
     private final Map<UUID, BanEntry> bannedPlayers = new HashMap<>();  // Map to store banned players
 
@@ -38,8 +44,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
         getLogger().info("BeaconLabs Proxy system was enabled.");
 
-        loadBanData();
-        Database.initialize();
+        DatabaseReports.initialize();
+        DatabasePunishments.initialize();
 
         // Register commands and other initialization
         ProxyServer proxy = ProxyServer.getInstance();
@@ -58,6 +64,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new ReportCommand(this));
         proxy.getPluginManager().registerCommand(this, new ViewReportsCommand(this));
         proxy.getPluginManager().registerCommand(this, new ClosereportCommand(this));
+        proxy.getPluginManager().registerCommand(this, new PunishmentsCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -116,31 +123,6 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         return bannedPlayers;
     }
 
-    private void loadBanData() {
-        File bansFile = new File(getDataFolder(), "bans.yml");
-
-        try {
-            if (!bansFile.exists()) {
-                bansFile.createNewFile();
-            }
-
-            Configuration config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(bansFile);
-
-            for (String key : config.getKeys()) {
-                UUID uuid = UUID.fromString(key);
-                String playerName = config.getString(key + ".playerName");
-                String reason = config.getString(key + ".reason");
-
-                bannedPlayers.put(uuid, new BanEntry(reason));
-            }
-
-            getLogger().info("bannedPlayers: " + bannedPlayers);
-        } catch (IOException e) {
-            getLogger().severe("Error loading bans.yml: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
     public String getKickMessageFormat() {
         return configuration.getString("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\nAppeal on our website: %s");
     }
@@ -149,11 +131,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         return configuration.getString("ban-message-format", "&cYou are banned from BeaconLabs\nReason: %s\n&6Our website: example.com");
     }
 
-    // Event listener for handling PostLoginEvent
     @EventHandler
     public void onJoin(PostLoginEvent event) {
-        loadBanData();
-
         ProxiedPlayer player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
@@ -162,17 +141,67 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
         if (isPlayerBanned(uuid)) {
             getLogger().info("Player is banned");
-            String banMessage = String.format(getBanMessageFormat(), bannedPlayers.get(uuid).getReason());
+            String banMessage = String.format(getBanMessageFormat(), getPlayerBanReason(uuid));
             player.disconnect(ChatColor.translateAlternateColorCodes('&', banMessage));
         } else {
             getLogger().info("Player isn't banned");
         }
     }
 
+    public boolean isPlayerBanned(UUID uuid) {
+        try (Connection conn = DatabasePunishments.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM punishments WHERE player_uuid = ? AND active = 1 AND type = 'ban'")) {
+            stmt.setString(1, uuid.toString());
 
-    // Check if a player is banned
-    private boolean isPlayerBanned(UUID uuid) {
-        return bannedPlayers.containsKey(uuid);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    long endTimeEpoch = rs.getLong("end_time");
+
+                    // Convert epoch time to LocalDateTime
+                    LocalDateTime endTime;
+                    if (endTimeEpoch == 0) {
+                        endTime = null; // Handle cases where there's no end time set (e.g., permanent ban)
+                    } else {
+                        Instant instant = Instant.ofEpochMilli(endTimeEpoch);
+                        endTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+                    }
+
+                    // Check if end time is in the past
+                    if (endTime != null && endTime.isBefore(LocalDateTime.now())) {
+                        // Let the player in
+                        return false;
+                    } else {
+                        // Player is still banned
+                        return true;
+                    }
+                } else {
+                    // No active ban found
+                    return false;
+                }
+            }
+        } catch (SQLException e) {
+            getLogger().severe("Error checking ban for player " + uuid + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Retrieve ban reason from the database
+    private String getPlayerBanReason(UUID uuid) {
+        try (Connection conn = DatabasePunishments.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT reason FROM punishments WHERE player_uuid = ? AND active = 1 AND type = 'Ban'")) {
+            stmt.setString(1, uuid.toString());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("reason");
+                }
+            }
+        } catch (SQLException e) {
+            getLogger().severe("Error retrieving ban reason for player " + uuid + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        return "No reason found.";
     }
 
     // Inner class representing a ban entry

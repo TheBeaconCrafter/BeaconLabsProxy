@@ -3,7 +3,6 @@ package org.bcnlabs.beaconlabsproxy;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
@@ -33,13 +32,13 @@ public class ViewReportsCommand extends Command {
         ProxiedPlayer player = (ProxiedPlayer) sender;
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
-            try (Connection conn = Database.getConnection()) {
+            try (Connection conn = DatabaseReports.getConnection()) {
                 if (conn != null && conn.isValid(3)) { // Check if the connection is valid within 3 seconds
                     String sql = "SELECT * FROM reports";
                     try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                         try (ResultSet rs = stmt.executeQuery()) {
                             if (!rs.isBeforeFirst()) {
-                                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "No reports found."));
+                                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "There are no open reports."));
                                 return;
                             }
 

@@ -2,28 +2,18 @@ package org.bcnlabs.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
-import net.md_5.bungee.config.Configuration;
-import net.md_5.bungee.config.ConfigurationProvider;
-import net.md_5.bungee.config.YamlConfiguration;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class BanCommand extends Command {
 
     private final BeaconLabsProxy plugin;
     private static final String PERMISSION = "beaconlabs.ban";  // Define the required permission
-    private final Map<UUID, BanEntry> bannedPlayers = new HashMap<>();  // Map to store banned players
     private final Webhooks webhooks;
 
     public BanCommand(BeaconLabsProxy plugin) {
@@ -34,6 +24,11 @@ public class BanCommand extends Command {
 
     @Override
     public void execute(CommandSender commandSender, String[] args) {
+        if (!(commandSender instanceof ProxiedPlayer)) {
+            commandSender.sendMessage(new TextComponent(ChatColor.RED + "This command can only be executed by a player."));
+            return;
+        }
+
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
 
         // Check if the player has the required permission
@@ -62,6 +57,7 @@ public class BanCommand extends Command {
         String reason = reasonBuilder.toString().trim();
         ProxiedPlayer playerToBan = plugin.getProxy().getPlayer(playerName);
         UUID uuid = playerToBan != null ? playerToBan.getUniqueId() : null;
+        String lastName = playerToBan != null ? playerToBan.getName() : null;
 
         if (uuid == null) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
@@ -70,11 +66,9 @@ public class BanCommand extends Command {
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime unbanDate = durationDays > 0 ? now.plusDays(durationDays) : null; // Calculate unban date if duration is specified
-        BanEntry banEntry = new BanEntry(playerName, reason, now, durationDays);
-        bannedPlayers.put(uuid, banEntry);
 
-        // Save the ban to YAML file
-        saveBanData();
+        // Save the ban to database with UUID and last name
+        PunishmentManager.addPunishment(uuid.toString(), lastName, player.getName(), "ban", reason, durationDays > 0 ? durationDays * 24 * 60 * 60 : 0);
 
         // Broadcast the ban message
         broadcastBanMessage(playerName, reason, player.getName(), now, unbanDate, durationDays);
@@ -82,39 +76,6 @@ public class BanCommand extends Command {
         // Disconnect and prevent player from joining if online
         if (playerToBan != null && playerToBan.isConnected()) {
             playerToBan.disconnect(TextComponent.fromLegacyText(ChatColor.RED + "You are banned from this server. Reason: " + reason));
-        }
-    }
-
-    // Method to save banned player data to YAML file
-    private void saveBanData() {
-        File dataFolder = plugin.getDataFolder();
-        if (!dataFolder.exists()) {
-            dataFolder.mkdir();
-        }
-
-        File bansFile = new File(dataFolder, "bans.yml");
-        Configuration config;
-
-        try {
-            if (!bansFile.exists()) {
-                bansFile.createNewFile();
-            }
-
-            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(bansFile);
-
-            for (Map.Entry<UUID, BanEntry> entry : bannedPlayers.entrySet()) {
-                String key = entry.getKey().toString();
-                BanEntry banEntry = entry.getValue();
-
-                config.set(key + ".playerName", banEntry.getPlayerName());
-                config.set(key + ".reason", banEntry.getReason());
-                config.set(key + ".banDate", banEntry.getBanDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                config.set(key + ".durationDays", banEntry.getBanDurationDays());
-            }
-
-            ConfigurationProvider.getProvider(YamlConfiguration.class).save(config, bansFile);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

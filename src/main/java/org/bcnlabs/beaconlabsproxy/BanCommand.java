@@ -9,6 +9,8 @@ import net.md_5.bungee.api.plugin.Command;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BanCommand extends Command {
 
@@ -44,14 +46,39 @@ public class BanCommand extends Command {
 
         String playerName = args[0];
         StringBuilder reasonBuilder = new StringBuilder();
-        int durationDays = -1;
+        int durationSeconds = 0;
+
+        // Regex pattern to match durations like Xd, Xy, Xm, Xmin, Xs
+        Pattern durationPattern = Pattern.compile("(\\d+)([dDyYmMsS]|min)");
 
         for (int i = 1; i < args.length; i++) {
-            if (args[i].matches("\\d+d")) { // Check if the argument matches a duration format like 30d
-                durationDays = Integer.parseInt(args[i].substring(0, args[i].length() - 1));
-                break; // Exit loop after finding duration
+            Matcher matcher = durationPattern.matcher(args[i]);
+            if (matcher.matches()) {
+                int amount = Integer.parseInt(matcher.group(1));
+                String unit = matcher.group(2).toLowerCase();
+
+                switch (unit) {
+                    case "d":
+                        durationSeconds += amount * 24 * 60 * 60; // days to seconds
+                        break;
+                    case "y":
+                        durationSeconds += amount * 365 * 24 * 60 * 60; // years to seconds (approximate)
+                        break;
+                    case "m":
+                        durationSeconds += amount * 30 * 24 * 60 * 60; // months to seconds (approximate)
+                        break;
+                    case "min":
+                        durationSeconds += amount * 60; // minutes to seconds
+                        break;
+                    case "s":
+                        durationSeconds += amount; // seconds
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                reasonBuilder.append(args[i]).append(" ");
             }
-            reasonBuilder.append(args[i]).append(" ");
         }
 
         String reason = reasonBuilder.toString().trim();
@@ -65,13 +92,13 @@ public class BanCommand extends Command {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime unbanDate = durationDays > 0 ? now.plusDays(durationDays) : null; // Calculate unban date if duration is specified
+        LocalDateTime unbanDate = durationSeconds > 0 ? now.plusSeconds(durationSeconds) : null; // Calculate unban date if duration is specified
 
         // Save the ban to database with UUID and last name
-        PunishmentManager.addPunishment(uuid.toString(), lastName, player.getName(), "ban", reason, durationDays > 0 ? durationDays * 24 * 60 * 60 : 0);
+        PunishmentManager.addPunishment(uuid.toString(), lastName, player.getName(), "ban", reason, durationSeconds);
 
         // Broadcast the ban message
-        broadcastBanMessage(playerName, reason, player.getName(), now, unbanDate, durationDays);
+        broadcastBanMessage(playerName, reason, player.getName(), now, unbanDate, durationSeconds);
 
         // Disconnect and prevent player from joining if online
         if (playerToBan != null && playerToBan.isConnected()) {
@@ -80,7 +107,7 @@ public class BanCommand extends Command {
     }
 
     // Method to broadcast ban message via webhook and in-game chat
-    private void broadcastBanMessage(String playerName, String reason, String senderName, LocalDateTime timestamp, LocalDateTime unbanDate, int durationDays) {
+    private void broadcastBanMessage(String playerName, String reason, String senderName, LocalDateTime timestamp, LocalDateTime unbanDate, int durationSeconds) {
         String formattedTimestamp = timestamp.format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss"));
         String banMessage = playerName + " was banned by " + senderName + " for " + reason + ". Time: " + formattedTimestamp;
 
@@ -90,7 +117,7 @@ public class BanCommand extends Command {
         }
 
         // Broadcast to Discord webhook
-        String duration = unbanDate != null ? durationDays + " days" : "Permanent";
+        String duration = unbanDate != null ? formatDuration(durationSeconds) : "Permanent";
         webhooks.sendBanWebhook(playerName, reason, duration, senderName, formattedTimestamp);
 
         // Broadcast to players with permission
@@ -103,5 +130,35 @@ public class BanCommand extends Command {
 
         // Log to console
         plugin.getLogger().info(banMessage);
+    }
+
+    // Method to format duration in a human-readable format
+    private String formatDuration(int durationSeconds) {
+        if (durationSeconds <= 0) {
+            return "Permanent";
+        }
+
+        long days = durationSeconds / (24 * 60 * 60);
+        durationSeconds = durationSeconds % (24 * 60 * 60);
+        long hours = durationSeconds / (60 * 60);
+        durationSeconds = durationSeconds % (60 * 60);
+        long minutes = durationSeconds / 60;
+        long seconds = durationSeconds % 60;
+
+        StringBuilder formattedDuration = new StringBuilder();
+        if (days > 0) {
+            formattedDuration.append(days).append("d ");
+        }
+        if (hours > 0) {
+            formattedDuration.append(hours).append("h ");
+        }
+        if (minutes > 0) {
+            formattedDuration.append(minutes).append("min ");
+        }
+        if (seconds > 0) {
+            formattedDuration.append(seconds).append("s");
+        }
+
+        return formattedDuration.toString().trim();
     }
 }

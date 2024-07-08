@@ -65,6 +65,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new ViewReportsCommand(this));
         proxy.getPluginManager().registerCommand(this, new ClosereportCommand(this));
         proxy.getPluginManager().registerCommand(this, new PunishmentsCommand(this));
+        proxy.getPluginManager().registerCommand(this, new ClearPunishmentsCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -78,7 +79,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
                 // Load default configuration and save it
                 configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
-                configuration.set("prefix", "&6[BeaconLabs]&r ");
+                configuration.set("prefix", "&6BeaconLabs &8» ");
                 configuration.set("ban-message-format", "&cYou are banned from BeaconLabs\nReason: %s\n&6Our website: example.com");
                 configuration.set("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\n&6Our website: example.com");
                 configuration.set("webhook.url", "https://your-discord-webhook-url");
@@ -150,11 +151,11 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
     public boolean isPlayerBanned(UUID uuid) {
         try (Connection conn = DatabasePunishments.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM punishments WHERE player_uuid = ? AND active = 1 AND type = 'ban'")) {
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM punishments WHERE player_uuid = ? AND type = 'ban'")) {
             stmt.setString(1, uuid.toString());
 
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
+                while (rs.next()) {
                     long endTimeEpoch = rs.getLong("end_time");
 
                     // Convert epoch time to LocalDateTime
@@ -166,30 +167,27 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
                         endTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
                     }
 
-                    // Check if end time is in the past
-                    if (endTime != null && endTime.isBefore(LocalDateTime.now())) {
-                        // Let the player in
-                        return false;
-                    } else {
+                    // Check if end time is in the future (meaning the ban is active)
+                    if (endTime == null || endTime.isAfter(LocalDateTime.now())) {
                         // Player is still banned
                         return true;
                     }
-                } else {
-                    // No active ban found
-                    return false;
                 }
             }
         } catch (SQLException e) {
             getLogger().severe("Error checking ban for player " + uuid + ": " + e.getMessage());
             e.printStackTrace();
-            return false;
         }
+
+        // No active ban found
+        return false;
     }
+
 
     // Retrieve ban reason from the database
     private String getPlayerBanReason(UUID uuid) {
         try (Connection conn = DatabasePunishments.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT reason FROM punishments WHERE player_uuid = ? AND active = 1 AND type = 'Ban'")) {
+             PreparedStatement stmt = conn.prepareStatement("SELECT reason FROM punishments WHERE player_uuid = ? AND active = 1 AND type = 'ban'")) {
             stmt.setString(1, uuid.toString());
 
             try (ResultSet rs = stmt.executeQuery()) {

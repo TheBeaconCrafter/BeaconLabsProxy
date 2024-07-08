@@ -53,6 +53,8 @@ public class UnbanIDCommand extends Command {
                 // Remove ban from database and update original ban record
                 unbanPlayer(uuid, player.getName()); // Pass player's name who executed the unban
 
+                webhooks.sendUnbanWebhook(uuid.toString(), player.getName(), LocalDateTime.now().format(formatter));
+
                 // Broadcast unban message to players with beaconlabs.staff.read.unban permission
                 for (ProxiedPlayer onlinePlayer : plugin.getProxy().getPlayers()) {
                     if (onlinePlayer.hasPermission("beaconlabs.staff.read.unban")) {

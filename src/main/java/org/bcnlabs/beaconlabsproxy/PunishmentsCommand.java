@@ -124,7 +124,9 @@ public class PunishmentsCommand extends Command {
                             LocalDateTime startDate = LocalDateTime.parse(startDateStr, START_DATE_FORMATTER);
                             LocalDateTime endDate = endTimeEpoch != 0 ? LocalDateTime.ofInstant(Instant.ofEpochMilli(endTimeEpoch), ZoneId.systemDefault()) : null;
 
-                            String startDateFormatted = startDate.format(DISPLAY_FORMATTER);
+                            LocalDateTime displayStartDate = startDate.plusHours(2); // Add 2 hours for display only
+
+                            String startDateFormatted = displayStartDate.format(DISPLAY_FORMATTER);
                             String endDateFormatted = endDate != null ? endDate.format(DISPLAY_FORMATTER) : "N/A";
                             String banLength = endDate != null ? ChronoUnit.DAYS.between(startDate, endDate) + " days" : "Permanent";
 

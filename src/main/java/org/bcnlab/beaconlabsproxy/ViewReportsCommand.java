@@ -1,4 +1,4 @@
-package org.bcnlabs.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;

@@ -1,4 +1,4 @@
-package org.bcnlabs.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -111,12 +111,12 @@ public class Webhooks {
         sendWebhook(jsonPayload);
     }
 
-    public void sendWarnWebhook(String username, String reason, String sender, String timestamp) {
+    public void sendMuteWebhook(String username, String reason, String durationString, String sender, String startTimeFormatted, String endTimeFormatted) {
         String jsonPayload = String.format(
                 "{\n" +
                         "  \"embeds\": [\n" +
                         "    {\n" +
-                        "      \"title\": \"Warn\",\n" +
+                        "      \"title\": \"Mute\",\n" +
                         "      \"color\": 14177041,\n" +
                         "      \"fields\": [\n" +
                         "        {\n" +
@@ -130,17 +130,26 @@ public class Webhooks {
                         "          \"inline\": true\n" +
                         "        },\n" +
                         "        {\n" +
-                        "          \"name\": \"From\",\n" +
+                        "          \"name\": \"Duration\",\n" +
                         "          \"value\": \"%s\"\n" +
                         "        },\n" +
                         "        {\n" +
-                        "          \"name\": \"Timestamp\",\n" +
+                        "          \"name\": \"Punisher\",\n" +
+                        "          \"value\": \"%s\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "          \"name\": \"Start Time\",\n" +
+                        "          \"value\": \"%s\"\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "          \"name\": \"End Time\",\n" +
                         "          \"value\": \"%s\"\n" +
                         "        }\n" +
                         "      ]\n" +
                         "    }\n" +
                         "  ]\n" +
-                        "}", username, reason, sender, timestamp);
+                        "}", username, reason, durationString, sender, startTimeFormatted, endTimeFormatted);
+
         sendWebhook(jsonPayload);
     }
 

@@ -1,4 +1,4 @@
-package org.bcnlabs.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
@@ -66,6 +66,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new ClosereportCommand(this));
         proxy.getPluginManager().registerCommand(this, new PunishmentsCommand(this));
         proxy.getPluginManager().registerCommand(this, new ClearPunishmentsCommand(this));
+        proxy.getPluginManager().registerCommand(this, new MuteCommand(this));
 
         getLogger().info("All commands were registered.");
 

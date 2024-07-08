@@ -1,4 +1,4 @@
-package org.bcnlabs.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

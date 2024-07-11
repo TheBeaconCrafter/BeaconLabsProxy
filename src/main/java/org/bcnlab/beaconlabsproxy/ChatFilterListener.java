@@ -46,7 +46,7 @@ public class ChatFilterListener implements Listener {
     private String containsBadWord(String message) {
         // Implement your logic to check for bad words here
         // For simplicity, let's assume we have a predefined list
-        String[] badWords = {"hrs", "ass", "dick", "fuck", "cock", "suck", "penis", "arsch", "fick", "fck", "huso", "slut", "slt", "dck", "ayri", "bitch", "btch", "nga", "nig"};
+        String[] badWords = {"hrs", "ass", "dick", "fuck", "cock", "suck", "penis", "arsch", "fick", "fck", "huso", "slut", "slt", "dck", "ayri", "bitch", "btch", "nga", "nig", "hure"};
 
         for (String word : badWords) {
             if (message.toLowerCase().contains(word)) {

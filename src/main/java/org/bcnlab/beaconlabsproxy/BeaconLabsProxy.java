@@ -69,6 +69,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new MuteCommand(this));
         proxy.getPluginManager().registerCommand(this, new UnmuteCommand(this));
         proxy.getPluginManager().registerCommand(this, new SkinCommand(this));
+        proxy.getPluginManager().registerCommand(this, new JoinMeCommand(this));
+        proxy.getPluginManager().registerCommand(this, new RequestServerJoinCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -97,6 +99,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
                 configuration.set("maxplayers", 100);
                 configuration.set("motd", "&b&lBEACON Lab &f&lTraining\n@dynamicmsg@");
                 configuration.set("dynamicmsgs", new String[]{"&d&lCome and enjoy our brand new games!", "&d&lNew KnockbackFFA mode!", "&d&lCome join us!"});
+                configuration.set("disallowedJoinmeServers", new String[]{"lobby", "lobby-1", "lobby-2"});
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
             }
 
@@ -152,6 +155,10 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
     public String[] getDynamicMSGs() {
         return configuration.getStringList("dynamicmsgs").toArray(new String[0]);
+    }
+
+    public String[] getDisallowedJoinmeServers() {
+        return configuration.getStringList("disallowedJoinmeServers").toArray(new String[0]);
     }
 
     public int getMaxPlayers() {

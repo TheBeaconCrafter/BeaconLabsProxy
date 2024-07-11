@@ -68,6 +68,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new ClearPunishmentsCommand(this));
         proxy.getPluginManager().registerCommand(this, new MuteCommand(this));
         proxy.getPluginManager().registerCommand(this, new UnmuteCommand(this));
+        proxy.getPluginManager().registerCommand(this, new SkinCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -75,6 +76,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerListener(this, this);
         proxy.getPluginManager().registerListener(this, new MuteListener(this));
         proxy.getPluginManager().registerListener(this, new ChatFilterListener(this));
+        proxy.getPluginManager().registerListener(this, new PingListener(this));
 
         getLogger().info("All listeners were registered.");
 
@@ -92,6 +94,9 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
                 configuration.set("ban-message-format", "&c&oBanned by an Admin\n&7\n&cReason: %s\n&7\n&cUnban Date &8» &7%s\n&7\n&8Unban applications on Discord\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
                 configuration.set("kick-message-format", "&c&oKicked by an Admin\n&7\n&cReason: %s\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
                 configuration.set("webhook.url", "https://your-discord-webhook-url");
+                configuration.set("maxplayers", 100);
+                configuration.set("motd", "&b&lBEACON Lab &f&lTraining\n@dynamicmsg@");
+                configuration.set("dynamicmsgs", new String[]{"&d&lCome and enjoy our brand new games!", "&d&lNew KnockbackFFA mode!", "&d&lCome join us!"});
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
             }
 
@@ -139,6 +144,18 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
     public String getBanMessageFormat() {
         return configuration.getString("ban-message-format", "&c&oBanned by an Admin\n&7\n&cReason: %s\n&7\n&cUnban Date &8» &7%s\n&7\n&8Unban applications on Discord\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
+    }
+
+    public String getMOTD() {
+        return configuration.getString("motd", "&6&lERROR in your MOTD config");
+    }
+
+    public String[] getDynamicMSGs() {
+        return configuration.getStringList("dynamicmsgs").toArray(new String[0]);
+    }
+
+    public int getMaxPlayers() {
+        return configuration.getInt("maxplayers");
     }
 
     @EventHandler

@@ -71,6 +71,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new SkinCommand(this));
         proxy.getPluginManager().registerCommand(this, new JoinMeCommand(this));
         proxy.getPluginManager().registerCommand(this, new RequestServerJoinCommand(this));
+        proxy.getPluginManager().registerCommand(this, new MaintenanceCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -93,11 +94,14 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
                 // Load default configuration and save it
                 configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
                 configuration.set("prefix", "&6BeaconLabs &8» ");
+                configuration.set("maintenance", false);
                 configuration.set("ban-message-format", "&c&oBanned by an Admin\n&7\n&cReason: %s\n&7\n&cUnban Date &8» &7%s\n&7\n&8Unban applications on Discord\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
                 configuration.set("kick-message-format", "&c&oKicked by an Admin\n&7\n&cReason: %s\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
+                configuration.set("maintenance-message-format", "&6&lServer currently in maintenance\n&7\n&cWe are working on getting the server back online!\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
                 configuration.set("webhook.url", "https://your-discord-webhook-url");
                 configuration.set("maxplayers", 100);
                 configuration.set("motd", "&b&lBEACON Lab &f&lTraining\n@dynamicmsg@");
+                configuration.set("motd-maintenance", "&b&lBEACON Lab &f&lTraining\n&6&lCurrently in maintenance!");
                 configuration.set("dynamicmsgs", new String[]{"&d&lCome and enjoy our brand new games!", "&d&lNew KnockbackFFA mode!", "&d&lCome join us!"});
                 configuration.set("disallowedJoinmeServers", new String[]{"lobby", "lobby-1", "lobby-2"});
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
@@ -149,8 +153,25 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         return configuration.getString("ban-message-format", "&c&oBanned by an Admin\n&7\n&cReason: %s\n&7\n&cUnban Date &8» &7%s\n&7\n&8Unban applications on Discord\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
     }
 
+    public String getMaintenanceMessageFormat() {
+        return configuration.getString("maintenance-message-format", "&6&lServer currently in maintenance\n&7\n&cWe are working on getting the server back online!\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
+    }
+
+    public void setMaintenance(Boolean maintenance) throws IOException {
+        configuration.set("maintenance", maintenance);
+        ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
+    }
+
+    public boolean getMaintenance() {
+        return configuration.getBoolean("maintenance");
+    }
+
     public String getMOTD() {
         return configuration.getString("motd", "&6&lERROR in your MOTD config");
+    }
+
+    public String getMOTDMaintenance() {
+        return configuration.getString("motd-maintenance", "&6&lERROR in your MOTD Maintenance config");
     }
 
     public String[] getDynamicMSGs() {
@@ -180,6 +201,13 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
             // Disconnect the player with the formatted ban message
             player.disconnect(ChatColor.translateAlternateColorCodes('&', banMessage));
+        }
+
+        if(getMaintenance()) {
+            if(!player.hasPermission("beaconlabs.maintenancejoin")) {
+                String message = getMaintenanceMessageFormat();
+                player.disconnect(ChatColor.translateAlternateColorCodes('&', message));
+            }
         }
     }
 

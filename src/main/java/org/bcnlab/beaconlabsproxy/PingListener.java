@@ -20,12 +20,18 @@ public class PingListener implements Listener {
     public void onProxyPing(ProxyPingEvent ev) {
         Random ran = new Random();
 
-        String motd = plugin.getMOTD();
+        String motd = "&6&lERROR";
+
+        if(!plugin.getMaintenance()) {
+            motd = plugin.getMOTD();
+        } else {
+            motd = plugin.getMOTDMaintenance();
+        }
+
         String[] dynamicMsgs = plugin.getDynamicMSGs();
 
         // Select a random dynamic message from the array
         String dynamicMsg = dynamicMsgs[ran.nextInt(dynamicMsgs.length)];
-
         String finalMotd = ChatColor.translateAlternateColorCodes('&', motd.replaceAll("@dynamicmsg@", dynamicMsg));
 
         ev.getResponse().setDescription(finalMotd);

@@ -9,7 +9,9 @@ import net.md_5.bungee.api.plugin.Command;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -41,7 +43,7 @@ public class MuteCommand extends Command {
             return;
         }
 
-        if (args.length < 2) {
+        if (args.length < 3) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /mute <player> <duration> <reason>"));
             return;
         }
@@ -68,6 +70,13 @@ public class MuteCommand extends Command {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime muteEnd = calculateMuteEnd(durationString);
 
+        if (muteEnd == null) {
+            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Invalid duration format."));
+            return;
+        }
+
+        long durationSeconds = Duration.between(now, muteEnd).getSeconds();
+
         // Save the mute to database with UUID and last name
         addMuteToDatabase(uuid.toString(), lastName, player.getName(), reason, now, muteEnd);
 
@@ -79,29 +88,88 @@ public class MuteCommand extends Command {
         player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Player " + playerName + " has been muted for " + durationString + "."));
 
         // Optionally broadcast mute message to players with beaconlabs.staff.read.mute permission
-        // broadcastMuteMessage(playerName, durationString, reason, player.getName(), now, muteEnd);
+        broadcastMuteMessage(playerName, reason, player.getName(), now, muteEnd, (int) durationSeconds);
+    }
+
+    private void broadcastMuteMessage(String playerName, String reason, String senderName, LocalDateTime timestamp, LocalDateTime unbanDate, int durationSeconds) {
+        String duration = unbanDate != null ? formatDuration(durationSeconds) : "Permanent";
+        String banMessage = playerName + " was muted by " + senderName + " for " + reason + ". Duration: " + duration;
+
+        if (unbanDate != null) {
+            String formattedUnbanDate = unbanDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss"));
+            banMessage += " (until " + formattedUnbanDate + ")";
+        }
+
+        // Broadcast to players with permission
+        for (ProxiedPlayer onlinePlayer : plugin.getProxy().getPlayers()) {
+            if (onlinePlayer.hasPermission("beaconlabs.staff.read.mute")) {
+                TextComponent message = new TextComponent(plugin.getPrefix() + ChatColor.RED + banMessage);
+                onlinePlayer.sendMessage(message);
+            }
+        }
+
+        // Log to console
+        plugin.getLogger().info(banMessage);
+    }
+
+    // Method to format duration in a human-readable format
+    private String formatDuration(int durationSeconds) {
+        if (durationSeconds <= 0) {
+            return "Permanent";
+        }
+
+        long days = durationSeconds / (24 * 60 * 60);
+        durationSeconds = durationSeconds % (24 * 60 * 60);
+        long hours = durationSeconds / (60 * 60);
+        durationSeconds = durationSeconds % (60 * 60);
+        long minutes = durationSeconds / 60;
+        long seconds = durationSeconds % 60;
+
+        StringBuilder formattedDuration = new StringBuilder();
+        if (days > 0) {
+            formattedDuration.append(days).append("d ");
+        }
+        if (hours > 0) {
+            formattedDuration.append(hours).append("h ");
+        }
+        if (minutes > 0) {
+            formattedDuration.append(minutes).append("min ");
+        }
+        if (seconds > 0) {
+            formattedDuration.append(seconds).append("s");
+        }
+
+        return formattedDuration.toString().trim();
     }
 
     private LocalDateTime calculateMuteEnd(String durationString) {
-        // Implement logic to parse durationString into LocalDateTime for mute end time
-        // Example logic:
-        LocalDateTime muteEnd = null;
+        long durationSeconds = 0;
 
-        if (durationString.matches("\\d+d")) {
-            int days = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
-            muteEnd = LocalDateTime.now().plusDays(days);
-        } else if (durationString.matches("\\d+h")) {
-            int hours = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
-            muteEnd = LocalDateTime.now().plusHours(hours);
-        } else if (durationString.matches("\\d+m")) {
-            int minutes = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
-            muteEnd = LocalDateTime.now().plusMinutes(minutes);
-        } else if (durationString.matches("\\d+s")) {
-            int seconds = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
-            muteEnd = LocalDateTime.now().plusSeconds(seconds);
+        try {
+            if (durationString.matches("\\d+d")) {
+                int days = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
+                durationSeconds += days * 24 * 60 * 60;
+            } else if (durationString.matches("\\d+y")) {
+                int years = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
+                durationSeconds += years * 365 * 24 * 60 * 60; // Approximation
+            } else if (durationString.matches("\\d+m")) {
+                int months = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
+                durationSeconds += months * 30 * 24 * 60 * 60; // Approximation
+            } else if (durationString.matches("\\d+min")) {
+                int minutes = Integer.parseInt(durationString.substring(0, durationString.length() - 3));
+                durationSeconds += minutes * 60;
+            } else if (durationString.matches("\\d+s")) {
+                int seconds = Integer.parseInt(durationString.substring(0, durationString.length() - 1));
+                durationSeconds += seconds;
+            } else {
+                return null;
+            }
+        } catch (NumberFormatException e) {
+            plugin.getLogger().severe("Error parsing duration string: " + durationString + ". " + e.getMessage());
+            return null;
         }
 
-        return muteEnd;
+        return LocalDateTime.now().plusSeconds(durationSeconds);
     }
 
     private void addMuteToDatabase(String uuid, String lastName, String punisherName, String reason, LocalDateTime startTime, LocalDateTime endTime) {
@@ -113,7 +181,7 @@ public class MuteCommand extends Command {
                 insertStmt.setString(3, "Mute");
                 insertStmt.setString(4, reason);
                 insertStmt.setString(5, startTime.format(formatter));
-                insertStmt.setString(6, endTime != null ? endTime.format(formatter) : null); // End time can be null for permanent mutes
+                insertStmt.setLong(6, endTime != null ? endTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() : 0); // End time in milliseconds, 0 for permanent mutes
                 insertStmt.executeUpdate();
             }
         } catch (SQLException e) {

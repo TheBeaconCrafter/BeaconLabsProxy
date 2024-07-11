@@ -153,6 +153,58 @@ public class Webhooks {
         sendWebhook(jsonPayload);
     }
 
+    public void sendUnmuteWebhook(String targetName, String senderName) {
+        String jsonPayload = String.format(
+                "{\n" +
+                        "  \"embeds\": [\n" +
+                        "    {\n" +
+                        "      \"title\": \"Unmute\",\n" +
+                        "      \"color\": 65280,\n" +
+                        "      \"fields\": [\n" +
+                        "        {\n" +
+                        "          \"name\": \"Unmuted Player\",\n" +
+                        "          \"value\": \"%s\",\n" +
+                        "          \"inline\": true\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "          \"name\": \"Unmuted By\",\n" +
+                        "          \"value\": \"%s\",\n" +
+                        "          \"inline\": true\n" +
+                        "        }\n" +
+                        "      ]\n" +
+                        "    }\n" +
+                        "  ]\n" +
+                        "}", targetName, senderName);
+
+        sendWebhook(jsonPayload);
+    }
+
+    public void sendCpunishWebhook(String targetName, String senderName) {
+        String jsonPayload = String.format(
+                "{\n" +
+                        "  \"embeds\": [\n" +
+                        "    {\n" +
+                        "      \"title\": \"Clear Punishments\",\n" +
+                        "      \"color\": 13744384,\n" +
+                        "      \"fields\": [\n" +
+                        "        {\n" +
+                        "          \"name\": \"Cleared Player\",\n" +
+                        "          \"value\": \"%s\",\n" +
+                        "          \"inline\": true\n" +
+                        "        },\n" +
+                        "        {\n" +
+                        "          \"name\": \"Cleared By\",\n" +
+                        "          \"value\": \"%s\",\n" +
+                        "          \"inline\": true\n" +
+                        "        }\n" +
+                        "      ]\n" +
+                        "    }\n" +
+                        "  ]\n" +
+                        "}", targetName, senderName);
+
+        sendWebhook(jsonPayload);
+    }
+
     private void sendWebhook(String jsonPayload) {
         try {
             URL url = new URL(plugin.webhookUrl);

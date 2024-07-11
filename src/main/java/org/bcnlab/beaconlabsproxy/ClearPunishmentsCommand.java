@@ -21,19 +21,16 @@ public class ClearPunishmentsCommand extends Command {
 
     private final BeaconLabsProxy plugin;
     private static final String PERMISSION = "beaconlabs.clearpunishments";  // Define the required permission
+    private final Webhooks webhooks;
 
     public ClearPunishmentsCommand(BeaconLabsProxy plugin) {
         super("clearpunishments", "", "cpunish");
         this.plugin = plugin;
+        this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
     public void execute(CommandSender commandSender, String[] args) {
-        if (!(commandSender instanceof ProxiedPlayer)) {
-            commandSender.sendMessage(new TextComponent(ChatColor.RED + "This command can only be executed by a player."));
-            return;
-        }
-
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
 
         // Check if the player has the required permission
@@ -62,6 +59,7 @@ public class ClearPunishmentsCommand extends Command {
                 clearPunishments(uuid);
 
                 player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "All punishments for player " + playerName + " have been cleared."));
+                webhooks.sendCpunishWebhook(playerName, player.getName());
 
             } catch (Exception e) {
                 player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while clearing punishments: " + e.getMessage()));

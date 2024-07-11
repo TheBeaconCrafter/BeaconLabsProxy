@@ -67,8 +67,16 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new PunishmentsCommand(this));
         proxy.getPluginManager().registerCommand(this, new ClearPunishmentsCommand(this));
         proxy.getPluginManager().registerCommand(this, new MuteCommand(this));
+        proxy.getPluginManager().registerCommand(this, new UnmuteCommand(this));
 
         getLogger().info("All commands were registered.");
+
+        // Register event listeners
+        proxy.getPluginManager().registerListener(this, this);
+        proxy.getPluginManager().registerListener(this, new MuteListener(this));
+        proxy.getPluginManager().registerListener(this, new ChatFilterListener(this));
+
+        getLogger().info("All listeners were registered.");
 
         // Set up configuration file
         file = new File(getDataFolder(), "config.yml");

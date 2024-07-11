@@ -2,11 +2,16 @@ package org.bcnlab.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 
-public class MsgCommand extends Command {
+import java.util.ArrayList;
+import java.util.List;
+
+public class MsgCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
     private static final String PERMISSION = "beaconlabs.msg";  // Define the required permission
@@ -54,5 +59,17 @@ public class MsgCommand extends Command {
         // Format and send the message to sender and recipient
         sender.sendMessage(new TextComponent(ChatColor.GRAY + "[" + ChatColor.DARK_RED + "You " + ChatColor.GRAY + "-> " + ChatColor.RED + targetPlayer.getName() + ChatColor.GRAY + "] " + message));
         targetPlayer.sendMessage(new TextComponent(ChatColor.GRAY + "[" + ChatColor.RED + sender.getName() + ChatColor.GRAY + " ->" + ChatColor.DARK_RED + " You" + ChatColor.GRAY + "] " + message));
+    }
+
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) {
+            List<String> playerNames = new ArrayList<>();
+            for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+                playerNames.add(p.getName());
+            }
+            return playerNames;
+        }
+        return new ArrayList<>();
     }
 }

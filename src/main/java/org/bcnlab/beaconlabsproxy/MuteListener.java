@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class MuteListener implements Listener {
@@ -37,14 +38,47 @@ public class MuteListener implements Listener {
             String message = event.getMessage();
             if (!message.startsWith("/")) {
                 player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You are muted and cannot send messages."));
+                sendMuteReason(player, uuid); // Send mute reason for commands
                 event.setCancelled(true);
             } else {
                 String command = message.split(" ")[0].substring(1).toLowerCase();
                 if (isMutedCommand(command)) {
                     player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You are muted and cannot use this command."));
+                    sendMuteReason(player, uuid); // Send mute reason for commands
                     event.setCancelled(true);
                 }
             }
+        }
+    }
+
+    private void sendMuteReason(ProxiedPlayer player, UUID uuid) {
+        try (Connection conn = DatabasePunishments.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT reason, end_time FROM punishments WHERE player_uuid = ? AND type = 'Mute' ORDER BY start_time DESC LIMIT 1")) {
+            stmt.setString(1, uuid.toString());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String reason = rs.getString("reason");
+                    long endTimeEpoch = rs.getLong("end_time");
+
+                    // Convert epoch time to LocalDateTime
+                    LocalDateTime endTime;
+                    if (endTimeEpoch == 0) {
+                        endTime = null; // Handle cases where there's no end time set (e.g., permanent mute)
+                    } else {
+                        Instant instant = Instant.ofEpochMilli(endTimeEpoch);
+                        endTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+                    }
+
+                    // Format end time into a readable format
+                    String endTimeFormatted = endTime != null ? endTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "permanent";
+
+                    player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You are muted for: " + reason + " until " + endTimeFormatted));
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe("Error retrieving mute reason for player " + uuid + ": " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

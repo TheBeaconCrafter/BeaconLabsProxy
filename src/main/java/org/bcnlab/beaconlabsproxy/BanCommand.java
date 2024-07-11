@@ -1,18 +1,28 @@
 package org.bcnlab.beaconlabsproxy;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BanCommand extends Command {
+public class BanCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
     private static final String PERMISSION = "beaconlabs.ban";  // Define the required permission
@@ -26,11 +36,6 @@ public class BanCommand extends Command {
 
     @Override
     public void execute(CommandSender commandSender, String[] args) {
-        if (!(commandSender instanceof ProxiedPlayer)) {
-            commandSender.sendMessage(new TextComponent(ChatColor.RED + "This command can only be executed by a player."));
-            return;
-        }
-
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
 
         // Check if the player has the required permission
@@ -87,8 +92,12 @@ public class BanCommand extends Command {
         String lastName = playerToBan != null ? playerToBan.getName() : null;
 
         if (uuid == null) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
-            return;
+            try {
+                uuid = getUUIDFromPlayerName(playerName);
+            } catch (Exception e) {
+                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found."));
+                throw new RuntimeException(e);
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -100,10 +109,53 @@ public class BanCommand extends Command {
         // Broadcast the ban message
         broadcastBanMessage(playerName, reason, player.getName(), now, unbanDate, durationSeconds);
 
-        // Disconnect and prevent player from joining if online
         if (playerToBan != null && playerToBan.isConnected()) {
-            playerToBan.disconnect(TextComponent.fromLegacyText(ChatColor.RED + "You are banned from this server. Reason: " + reason));
+            // Get the ban message format from the plugin's configuration
+            String banMessageFormat = plugin.getBanMessageFormat();
+
+            // Format the ban reason and unban date into the ban message format
+            String formattedReason = String.format(banMessageFormat, reason, formatDateTime(unbanDate));
+
+            // Disconnect the player with the formatted ban message
+            playerToBan.disconnect(TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', formattedReason)));
         }
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "Permanent";
+        } else {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return dateTime.format(formatter);
+        }
+    }
+
+    private UUID getUUIDFromPlayerName(String playerName) throws Exception {
+        String urlString = "https://api.mojang.com/users/profiles/minecraft/" + playerName;
+        URL url = new URL(urlString);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("Content-Type", "application/json");
+
+        if (connection.getResponseCode() != 200) {
+            return null;
+        }
+
+        InputStreamReader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8);
+        JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+        reader.close();
+
+        String uuidString = json.get("id").getAsString();
+        return parseUUIDFromString(uuidString);
+    }
+
+    private UUID parseUUIDFromString(String uuidString) {
+        String formattedUUID = uuidString.replaceFirst(
+                "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{12})",
+                "$1-$2-$3-$4-$5"
+        );
+        return UUID.fromString(formattedUUID);
     }
 
     // Method to broadcast ban message via webhook and in-game chat
@@ -160,5 +212,17 @@ public class BanCommand extends Command {
         }
 
         return formattedDuration.toString().trim();
+    }
+
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) {
+            List<String> playerNames = new ArrayList<>();
+            for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+                playerNames.add(p.getName());
+            }
+            return playerNames;
+        }
+        return new ArrayList<>();
     }
 }

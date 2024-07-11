@@ -2,15 +2,19 @@ package org.bcnlab.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
-public class KickCommand extends Command {
+public class KickCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
     private final Webhooks webhooks;
@@ -71,5 +75,17 @@ public class KickCommand extends Command {
         } else {
             commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player does not exist or is offline."));
         }
+    }
+
+    @Override
+    public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) {
+            List<String> playerNames = new ArrayList<>();
+            for (ProxiedPlayer p : ProxyServer.getInstance().getPlayers()) {
+                playerNames.add(p.getName());
+            }
+            return playerNames;
+        }
+        return new ArrayList<>();
     }
 }

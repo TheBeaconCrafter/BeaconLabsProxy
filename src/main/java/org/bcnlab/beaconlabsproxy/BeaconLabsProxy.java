@@ -89,8 +89,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
                 // Load default configuration and save it
                 configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
                 configuration.set("prefix", "&6BeaconLabs &8» ");
-                configuration.set("ban-message-format", "&cYou are banned from BeaconLabs\nReason: %s\n&6Our website: example.com");
-                configuration.set("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\n&6Our website: example.com");
+                configuration.set("ban-message-format", "&c&oBanned by an Admin\n&7\n&cReason: %s\n&7\n&cUnban Date &8» &7%s\n&7\n&8Unban applications on Discord\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
+                configuration.set("kick-message-format", "&c&oKicked by an Admin\n&7\n&cReason: %s\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
                 configuration.set("webhook.url", "https://your-discord-webhook-url");
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
             }
@@ -134,11 +134,11 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
     }
 
     public String getKickMessageFormat() {
-        return configuration.getString("kick-message-format", "&cYou were kicked from BeaconLabs\nReason: %s\nAppeal on our website: %s");
+        return configuration.getString("kick-message-format", "&c&oKicked by an Admin\n&7\n&cReason: %s\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
     }
 
     public String getBanMessageFormat() {
-        return configuration.getString("ban-message-format", "&cYou are banned from BeaconLabs\nReason: %s\n&6Our website: example.com");
+        return configuration.getString("ban-message-format", "&c&oBanned by an Admin\n&7\n&cReason: %s\n&7\n&cUnban Date &8» &7%s\n&7\n&8Unban applications on Discord\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
     }
 
     @EventHandler
@@ -146,19 +146,26 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         ProxiedPlayer player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        getLogger().info("A player joined");
-        getLogger().info("has UUID " + uuid);
+        getLogger().info("A player joined with UUID: " + uuid);
 
         if (isPlayerBanned(uuid)) {
             getLogger().info("Player is banned");
-            String banMessage = String.format(getBanMessageFormat(), getPlayerBanReason(uuid));
+
+            // Fetch ban reason and unban date
+            String banReason = getPlayerBanReason(uuid);
+            LocalDateTime unbanDate = getPlayerUnbanDate(uuid);
+
+            // Format the ban message including reason and unban date
+            String banMessage = formatBanMessage(banReason, unbanDate);
+
+            // Disconnect the player with the formatted ban message
             player.disconnect(ChatColor.translateAlternateColorCodes('&', banMessage));
         } else {
             getLogger().info("Player isn't banned");
         }
     }
 
-    public boolean isPlayerBanned(UUID uuid) {
+    private boolean isPlayerBanned(UUID uuid) {
         try (Connection conn = DatabasePunishments.getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM punishments WHERE player_uuid = ? AND type = 'ban'")) {
             stmt.setString(1, uuid.toString());
@@ -192,11 +199,9 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         return false;
     }
 
-
-    // Retrieve ban reason from the database
     private String getPlayerBanReason(UUID uuid) {
         try (Connection conn = DatabasePunishments.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT reason FROM punishments WHERE player_uuid = ? AND active = 1 AND type = 'ban'")) {
+             PreparedStatement stmt = conn.prepareStatement("SELECT reason FROM punishments WHERE player_uuid = ? AND type = 'ban' ORDER BY start_time DESC LIMIT 1")) {
             stmt.setString(1, uuid.toString());
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -208,7 +213,36 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
             getLogger().severe("Error retrieving ban reason for player " + uuid + ": " + e.getMessage());
             e.printStackTrace();
         }
-        return "No reason found.";
+        return "Unknown Reason";
+    }
+
+    private LocalDateTime getPlayerUnbanDate(UUID uuid) {
+        try (Connection conn = DatabasePunishments.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT end_time FROM punishments WHERE player_uuid = ? AND type = 'ban' ORDER BY start_time DESC LIMIT 1")) {
+            stmt.setString(1, uuid.toString());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    long endTimeEpoch = rs.getLong("end_time");
+
+                    // Convert epoch time to LocalDateTime
+                    if (endTimeEpoch != 0) {
+                        Instant instant = Instant.ofEpochMilli(endTimeEpoch);
+                        return LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            getLogger().severe("Error retrieving unban date for player " + uuid + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null; // Default to null if no valid unban date is found
+    }
+
+    private String formatBanMessage(String reason, LocalDateTime unbanDate) {
+        String banMessageFormat = getBanMessageFormat();
+        String formattedUnbanDate = (unbanDate != null) ? unbanDate.toString() : "Permanent";
+        return String.format(banMessageFormat, reason, formattedUnbanDate);
     }
 
     // Inner class representing a ban entry

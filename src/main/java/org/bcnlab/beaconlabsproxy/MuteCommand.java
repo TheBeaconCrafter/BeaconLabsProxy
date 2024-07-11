@@ -89,6 +89,8 @@ public class MuteCommand extends Command {
 
         // Optionally broadcast mute message to players with beaconlabs.staff.read.mute permission
         broadcastMuteMessage(playerName, reason, player.getName(), now, muteEnd, (int) durationSeconds);
+
+        sendMuteNotification(playerToMute, reason, muteEnd);
     }
 
     private void broadcastMuteMessage(String playerName, String reason, String senderName, LocalDateTime timestamp, LocalDateTime unbanDate, int durationSeconds) {
@@ -197,5 +199,13 @@ public class MuteCommand extends Command {
         // Implement webhook sending logic here
         // Example:
         webhooks.sendMuteWebhook(playerName, reason, durationString, punisherName, formattedStartTime, formattedEndTime);
+    }
+
+    private void sendMuteNotification(ProxiedPlayer mutedPlayer, String reason, LocalDateTime muteEnd) {
+        if (mutedPlayer != null) {
+            String formattedEndTime = muteEnd != null ? muteEnd.format(DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss")) : "Permanent";
+            String notificationMessage = ChatColor.RED + "You have been muted for: " + reason + ". Expires: " + formattedEndTime;
+            mutedPlayer.sendMessage(new TextComponent(plugin.getPrefix() + notificationMessage));
+        }
     }
 }

@@ -1,3 +1,4 @@
 name: BeaconLabsProxy
 version: '${project.version}'
 main: org.bcnlab.beaconlabsproxy.BeaconLabsProxy
+author: ItsBeacon

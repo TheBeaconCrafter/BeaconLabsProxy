@@ -163,11 +163,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         ProxiedPlayer player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        getLogger().info("A player joined with UUID: " + uuid);
-
         if (isPlayerBanned(uuid)) {
-            getLogger().info("Player is banned");
-
             // Fetch ban reason and unban date
             String banReason = getPlayerBanReason(uuid);
             LocalDateTime unbanDate = getPlayerUnbanDate(uuid);
@@ -177,8 +173,6 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
             // Disconnect the player with the formatted ban message
             player.disconnect(ChatColor.translateAlternateColorCodes('&', banMessage));
-        } else {
-            getLogger().info("Player isn't banned");
         }
     }
 

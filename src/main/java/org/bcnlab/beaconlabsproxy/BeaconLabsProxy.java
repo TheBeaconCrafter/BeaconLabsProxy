@@ -73,6 +73,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new RequestServerJoinCommand(this));
         proxy.getPluginManager().registerCommand(this, new MaintenanceCommand(this));
         proxy.getPluginManager().registerCommand(this, new LobbyCommand(this));
+        proxy.getPluginManager().registerCommand(this, new ProxyCommand(this));
 
         getLogger().info("All commands were registered.");
 

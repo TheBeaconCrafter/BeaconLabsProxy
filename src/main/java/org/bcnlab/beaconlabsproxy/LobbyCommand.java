@@ -11,7 +11,7 @@ public class LobbyCommand extends Command {
     private final BeaconLabsProxy plugin;
 
     public LobbyCommand(BeaconLabsProxy plugin) {
-        super("lobby", "beaconlabs.lobby");
+        super("lobby", "beaconlabs.lobby", "l", "hub", "L", "Hub");
         this.plugin = plugin;
     }
 

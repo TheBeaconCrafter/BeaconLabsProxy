@@ -28,6 +28,7 @@ import java.util.UUID;
 public final class BeaconLabsProxy extends Plugin implements Listener {
 
     private String prefix = "[BeaconLabs]";
+    private String versionNumber = "1.1";
     private File file;
     private Configuration configuration;
 
@@ -133,6 +134,10 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
     public String getPrefix() {
         return prefix;
+    }
+
+    public String getVersion() {
+        return versionNumber;
     }
 
     public static BeaconLabsProxy getInstance() {

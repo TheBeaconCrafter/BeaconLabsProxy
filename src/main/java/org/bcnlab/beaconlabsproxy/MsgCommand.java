@@ -1,5 +1,11 @@
 package org.bcnlab.beaconlabsproxy;
 
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.cacheddata.CachedMetaData;
+import net.luckperms.api.context.ContextManager;
+import net.luckperms.api.query.QueryOptions;
+import net.luckperms.api.model.user.User;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.ProxyServer;
@@ -10,15 +16,18 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class MsgCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
+    private final LuckPerms luckPermsApi;  // LuckPerms API instance
     private static final String PERMISSION = "beaconlabs.msg";  // Define the required permission
 
     public MsgCommand(BeaconLabsProxy plugin) {
         super("msg", null, "message", "tell", "whisper");
         this.plugin = plugin;
+        this.luckPermsApi = LuckPermsProvider.get();
     }
 
     @Override
@@ -56,9 +65,13 @@ public class MsgCommand extends Command implements TabExecutor {
         }
         String message = messageBuilder.toString().trim();
 
+        // Fetch sender and target prefixes from LuckPerms
+        String senderPrefix = getPlayerPrefix(sender);
+        String targetPrefix = getPlayerPrefix(targetPlayer);
+
         // Format and send the message to sender and recipient
-        sender.sendMessage(new TextComponent(ChatColor.GRAY + "[" + ChatColor.DARK_RED + "You " + ChatColor.GRAY + "-> " + ChatColor.RED + targetPlayer.getName() + ChatColor.GRAY + "] " + message));
-        targetPlayer.sendMessage(new TextComponent(ChatColor.GRAY + "[" + ChatColor.RED + sender.getName() + ChatColor.GRAY + " ->" + ChatColor.DARK_RED + " You" + ChatColor.GRAY + "] " + message));
+        sender.sendMessage(new TextComponent(ChatColor.GRAY + "[" + ChatColor.DARK_RED + "You " + ChatColor.GRAY + "-> " + targetPrefix + ChatColor.GRAY + targetPlayer.getName() + ChatColor.GRAY + "] " + message));
+        targetPlayer.sendMessage(new TextComponent(ChatColor.GRAY + "[" + senderPrefix + ChatColor.GRAY + sender.getName() + ChatColor.GRAY + " ->" + ChatColor.DARK_RED + " You" + ChatColor.GRAY + "] " + message));
     }
 
     @Override
@@ -71,5 +84,17 @@ public class MsgCommand extends Command implements TabExecutor {
             return playerNames;
         }
         return new ArrayList<>();
+    }
+
+    private String getPlayerPrefix(ProxiedPlayer player) {
+        User user = luckPermsApi.getPlayerAdapter(ProxiedPlayer.class).getUser(player);
+        if (user == null) return "";  // Default if no user data
+
+        ContextManager contextManager = luckPermsApi.getContextManager();
+        QueryOptions queryOptions = contextManager.getQueryOptions(user).orElse(QueryOptions.defaultContextualOptions());
+        CachedMetaData metaData = user.getCachedData().getMetaData(queryOptions);
+
+        String prefix = metaData.getPrefix() != null ? ChatColor.translateAlternateColorCodes('&', metaData.getPrefix()) : "";
+        return prefix;
     }
 }

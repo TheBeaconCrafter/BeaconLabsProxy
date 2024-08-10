@@ -174,7 +174,7 @@ public class MuteCommand extends Command {
         return LocalDateTime.now().plusSeconds(durationSeconds);
     }
 
-    private void addMuteToDatabase(String uuid, String lastName, String punisherName, String reason, LocalDateTime startTime, LocalDateTime endTime) {
+    public void addMuteToDatabase(String uuid, String lastName, String punisherName, String reason, LocalDateTime startTime, LocalDateTime endTime) {
         try (Connection conn = DatabasePunishments.getConnection()) {
             String insertSql = "INSERT INTO punishments (player_uuid, punisher, type, reason, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {

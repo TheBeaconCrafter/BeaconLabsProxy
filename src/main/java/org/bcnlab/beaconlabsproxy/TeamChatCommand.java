@@ -63,7 +63,7 @@ public class TeamChatCommand extends Command {
 
         // Create the formatted message
         TextComponent formattedMessage = new TextComponent(
-                ChatColor.GREEN + "[Team Chat] " + playerPrefix + ChatColor.GRAY + player.getName() + playerSuffix + ": " + ChatColor.GOLD + message
+                ChatColor.GREEN + "[Team Chat] " + playerPrefix + ChatColor.GRAY + player.getName() + playerSuffix + ": " + ChatColor.GOLD + ChatColor.translateAlternateColorCodes('&', message)
         );
 
         // Send the message to all team chat members including the sender

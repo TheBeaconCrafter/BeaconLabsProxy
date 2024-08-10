@@ -52,6 +52,15 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         // Create an instance of WhitelistCommand
         WhitelistCommand whitelistCommand = new WhitelistCommand(this);
 
+        String logDirectory = getDataFolder() + "/chatlogs";
+        File logDir = new File(logDirectory);
+        if (!logDir.exists()) {
+            logDir.mkdirs();
+        }
+
+        // Create an instance of FileChatLogger
+        FileChatLogger chatLogger = new FileChatLogger(logDirectory);
+
         // Register commands and other initialization
         ProxyServer proxy = ProxyServer.getInstance();
         proxy.getPluginManager().registerCommand(this, new PingCommand(this));
@@ -81,6 +90,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new ProxyCommand(this));
         proxy.getPluginManager().registerCommand(this, new WhitelistCommand(this));
         proxy.getPluginManager().registerCommand(this, new WarnCommand(this));
+        proxy.getPluginManager().registerCommand(this, new ChatReportCommand(chatLogger, this));
 
         getLogger().info("All commands were registered.");
 
@@ -90,6 +100,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerListener(this, new MuteListener(this));
         proxy.getPluginManager().registerListener(this, new ChatFilterListener(this));
         proxy.getPluginManager().registerListener(this, new PingListener(this));
+        ProxyServer.getInstance().getPluginManager().registerListener(this, chatLogger);
 
         getLogger().info("All listeners were registered.");
 
@@ -138,7 +149,19 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
     @Override
     public void onDisable() {
+        clearLogDirectory();
         getLogger().info("BeaconLabs Proxy system was disabled.");
+    }
+
+    private void clearLogDirectory() {
+        File logDir = new File(getDataFolder(), "chatlogs");
+        if (logDir.exists() && logDir.isDirectory()) {
+            for (File file : logDir.listFiles()) {
+                if (!file.delete()) {
+                    getLogger().warning("Failed to delete file: " + file.getName());
+                }
+            }
+        }
     }
 
     public String getPrefix() {

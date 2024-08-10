@@ -69,6 +69,11 @@ public class ViewReportsCommand extends Command {
                                 goToButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/goto " + reported));
                                 reportComponent.addExtra(goToButton);
 
+                                // Create go to reported player button
+                                TextComponent chatReportButton = new TextComponent(ChatColor.GREEN + " [Chatreport]");
+                                chatReportButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/chatreport " + reported));
+                                reportComponent.addExtra(chatReportButton);
+
                                 // Send the formatted report to the player
                                 player.sendMessage(reportComponent);
                             }

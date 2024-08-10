@@ -38,7 +38,7 @@ public class ChatReportCommand extends Command implements TabExecutor {
     @Override
     public void execute(CommandSender commandSender, String[] args) {
         if (!(commandSender instanceof ProxiedPlayer)) {
-            commandSender.sendMessage(new TextComponent("Only players can use this command."));
+            commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Only players can use this command."));
             return;
         }
 
@@ -46,12 +46,12 @@ public class ChatReportCommand extends Command implements TabExecutor {
 
         // Check if the player has the required permission
         if (!sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent("You do not have permission to use this command."));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
             return;
         }
 
         if (args.length != 1) {
-            sender.sendMessage(new TextComponent("Usage: /chatreport <player>"));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /chatreport <player>"));
             return;
         }
 
@@ -98,13 +98,13 @@ public class ChatReportCommand extends Command implements TabExecutor {
         long duration = endTime - startTime;  // Calculate the duration in milliseconds
 
         // Create clickable link
-        TextComponent linkMessage = new TextComponent(plugin.getPrefix() + ChatColor.GOLD + "Chat log for " + ChatColor.RED + targetName + ChatColor.GOLD + " has been uploaded. ");
+        TextComponent linkMessage = new TextComponent(plugin.getPrefix() + ChatColor.GRAY + "Chat log for " + ChatColor.RED + targetName + ChatColor.GRAY + " has been uploaded. ");
         TextComponent link = new TextComponent(ChatColor.RED + "[Click here to view]");
         link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, pasteLink));
         linkMessage.addExtra(link);
 
         // Add time taken
-        TextComponent timeMessage = new TextComponent(ChatColor.GOLD + " (took " + duration + " ms)");
+        TextComponent timeMessage = new TextComponent(ChatColor.GRAY + " (took " + duration + " ms)");
 
         // Send the combined message to the player
         linkMessage.addExtra(timeMessage);
@@ -135,8 +135,6 @@ public class ChatReportCommand extends Command implements TabExecutor {
         } finally {
             reader.close();  // Ensure the reader is closed
         }
-        plugin.getLogger().info("Key is " + key);
-
         return "https://paste.md-5.net/" + key.split("\"")[3];  // Example response is {"key":"ecumusuhil"} so we need [3] element in the array
     }
 

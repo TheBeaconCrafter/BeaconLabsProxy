@@ -91,6 +91,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new WhitelistCommand(this));
         proxy.getPluginManager().registerCommand(this, new WarnCommand(this));
         proxy.getPluginManager().registerCommand(this, new ChatReportCommand(chatLogger, this));
+        proxy.getPluginManager().registerCommand(this, new ClearChatLogs(this));
 
         getLogger().info("All commands were registered.");
 
@@ -153,7 +154,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         getLogger().info("BeaconLabs Proxy system was disabled.");
     }
 
-    private void clearLogDirectory() {
+    public void clearLogDirectory() {
         File logDir = new File(getDataFolder(), "chatlogs");
         if (logDir.exists() && logDir.isDirectory()) {
             for (File file : logDir.listFiles()) {

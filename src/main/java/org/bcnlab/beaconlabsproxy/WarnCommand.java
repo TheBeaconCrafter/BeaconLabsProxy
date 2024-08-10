@@ -37,12 +37,14 @@ public class WarnCommand extends Command implements TabExecutor {
         punishments.put("hacking", new PunishmentDetails("Hacking", 1209600)); // 14 day ban
         punishments.put("chatabuse", new PunishmentDetails("Chat Abuse", 604800)); // 7 day mute
         punishments.put("insult", new PunishmentDetails("Insult", 604800)); // 7 day mute
+        punishments.put("advertising", new PunishmentDetails("Advertising", 86400)); // 1 day mute
         punishments.put("serverinsult", new PunishmentDetails("Server Insult", 604800)); // 7 day mute
         punishments.put("racism", new PunishmentDetails("Racism", 1209600)); // 14 day ban
         punishments.put("spamming1", new PunishmentDetails("Spam", 0)); // Kick
         punishments.put("spamming2", new PunishmentDetails("Spam", 86400)); // 1 day mute
         punishments.put("bugusing1", new PunishmentDetails("Bug Using", 0)); // Kick
         punishments.put("bugusing2", new PunishmentDetails("Bug Using", 86400)); // 1 day ban
+        punishments.put("griefing", new PunishmentDetails("Griefing", 86400)); // 1 day ban
         punishments.put("reportabuse", new PunishmentDetails("Report Abuse", 604800)); // 7 day ban
         punishments.put("skin", new PunishmentDetails("Skin", 604800)); // 7 day ban
         punishments.put("name", new PunishmentDetails("Name", 604800)); // 7 day ban
@@ -128,6 +130,10 @@ public class WarnCommand extends Command implements TabExecutor {
                 // Mute
                 warnManager.mutePlayer(playerToWarn.getUniqueId(), playerToWarn.getName(), sender.getName(), reason, durationSeconds);
                 break;
+            case "advertising":
+                // Mute
+                warnManager.mutePlayer(playerToWarn.getUniqueId(), playerToWarn.getName(), sender.getName(), reason, durationSeconds);
+                break;
             case "serverinsult":
                 // Mute
                 warnManager.mutePlayer(playerToWarn.getUniqueId(), playerToWarn.getName(), sender.getName(), reason, durationSeconds);
@@ -148,12 +154,22 @@ public class WarnCommand extends Command implements TabExecutor {
                 // Mute
                 warnManager.banPlayer(playerToWarn.getUniqueId(), playerToWarn.getName(), sender.getName(), reason, durationSeconds);
                 break;
+            case "griefing":
+                // Mute
+                warnManager.banPlayer(playerToWarn.getUniqueId(), playerToWarn.getName(), sender.getName(), reason, durationSeconds);
+                break;
         }
     }
 
     @Override
     public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-        if (args.length == 2) {
+        if (args.length == 1) {
+            // Get list of online player names and filter them based on input
+            return filterTabOptions(args[0], plugin.getProxy().getPlayers().stream()
+                    .map(ProxiedPlayer::getName)
+                    .toArray(String[]::new));
+        } else if (args.length == 2) {
+            // Provide tab completion for reasons
             return filterTabOptions(args[1], punishments.keySet().toArray(new String[0]));
         }
         return Collections.emptyList();

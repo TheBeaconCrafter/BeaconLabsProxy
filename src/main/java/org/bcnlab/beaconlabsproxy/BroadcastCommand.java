@@ -21,7 +21,6 @@ public class BroadcastCommand extends Command {
     public void execute(CommandSender commandSender, String[] args) {
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
 
-        // Check if the player has the required permission
         if (!player.hasPermission(PERMISSION)) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
             return;
@@ -40,7 +39,7 @@ public class BroadcastCommand extends Command {
         String message = messageBuilder.toString().trim();
 
         // Send the message to all team chat members including sender
-        TextComponent formattedMessage = new TextComponent(ChatColor.RED + "[Broadcast] " + ChatColor.GOLD + message);
+        TextComponent formattedMessage = new TextComponent(ChatColor.GRAY + "[" + ChatColor.DARK_RED + "Broadcast" + ChatColor.GRAY + "] " + ChatColor.WHITE + ChatColor.translateAlternateColorCodes('&', message));
         for (ProxiedPlayer recipient : ProxyServer.getInstance().getPlayers()) {
             recipient.sendMessage(formattedMessage);
         }

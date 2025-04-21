@@ -2,15 +2,12 @@ package org.bcnlab.beaconlabsproxy;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.event.PostLoginEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
-import net.md_5.bungee.event.EventHandler;
+import org.bcnlab.beaconlabsproxy.Listeners.BackendKickListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,6 +102,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerListener(this, new ChatFilterListener(this));
         proxy.getPluginManager().registerListener(this, new PingListener(this));
         proxy.getPluginManager().registerListener(this, new PlaytimeListener(this));
+        proxy.getPluginManager().registerListener(this, new BackendKickListener(this));
         ProxyServer.getInstance().getPluginManager().registerListener(this, chatLogger);
 
         getLogger().info("All listeners were registered.");

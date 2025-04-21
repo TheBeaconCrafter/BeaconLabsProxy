@@ -7,12 +7,14 @@
 - **Punishment System:** Allows admins to ban, kick and mute players for a set amount of time.
 - **Report System:** Allows players to report misbehaving members of your community.
 - **Built-in chatfilter:** Gives supporters the option to see offensive messages proxy-wide
+- **Chatlogger:** All chats and commands are saved and can be retrieved later on using /chatreport
 - **Discord Webhooks:** All actions (bans, kicks, mutes, etc) by your supporters can be logged in a Discord Channel
 - **JoinMe:** Allows players to invite others to their current server.
 - **Maintenance Mode:** Enables or disables maintenance mode, kicking non-authorized players.
 - **MOTD with dynamic text:** Configurable messages that can be displayed in server list descriptions.
 - **Team Chat:** Team Chat for all your staff members to talk.
 - **Permissions:** Provides fine-grained control over who can use each command and bypass maintenance mode.
+- **Playtime:** Builtin playtime tracker (/pt)
 - **Many more:** Including useful tools like /staff, /uid, /check, /punishments, /ping, /skin, /goto, /broadcast
 
 ## Commands
@@ -32,6 +34,11 @@
 - **Usage:** `/kick <player> <reason>` Example: `/kick ItsBeacon Spamming`
 - **Permissions:** `beaconlabs.kick`
 
+### /warn
+- **Description:** Handles bans, kicks & mutes automatically based on the reason
+- **Usage:** `/warn <player> <reason>` Example: `/warn ItsBeacon Chatabuse`
+- **Permissions:** `beaconlabs.warn`
+
 ### /joinme
 - **Description:** Invites players from all servers to join the sender's current server.
 - **Usage:** `/joinme`
@@ -42,7 +49,7 @@
 - **Usage:** `/maintenance <on|off>`
 - **Permissions:** `beaconlabs.maintenance` & `beaconlabs.maintenancejoin`
 
-...many more! Documentation following soon.
+...many more!
 
 ## Configuration
 

@@ -29,7 +29,7 @@ import java.util.UUID;
 public final class BeaconLabsProxy extends Plugin implements Listener {
 
     private String prefix = "[BeaconLabs]";
-    private String versionNumber = "1.2";
+    private String versionNumber = "1.3";
     private File file;
     private Configuration configuration;
 
@@ -48,6 +48,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
         DatabaseReports.initialize();
         DatabasePunishments.initialize();
+        DatabasePlayers.initialize();
 
         // Create an instance of WhitelistCommand
         WhitelistCommand whitelistCommand = new WhitelistCommand(this);
@@ -93,6 +94,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new ChatReportCommand(chatLogger, this));
         proxy.getPluginManager().registerCommand(this, new ClearChatLogs(this));
         proxy.getPluginManager().registerCommand(this, new ConsoleClearPunishments(this));
+        proxy.getPluginManager().registerCommand(this, new PlaytimeCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -102,6 +104,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerListener(this, new MuteListener(this));
         proxy.getPluginManager().registerListener(this, new ChatFilterListener(this));
         proxy.getPluginManager().registerListener(this, new PingListener(this));
+        proxy.getPluginManager().registerListener(this, new PlaytimeListener(this));
         ProxyServer.getInstance().getPluginManager().registerListener(this, chatLogger);
 
         getLogger().info("All listeners were registered.");

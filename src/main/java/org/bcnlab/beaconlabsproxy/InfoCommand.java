@@ -9,6 +9,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
+import net.md_5.bungee.protocol.packet.Chat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,14 +78,26 @@ public class InfoCommand extends Command implements TabExecutor {
         infoMessage.addExtra(ChatColor.YELLOW + "Current Server: ");
 
         if (targetPlayer.getServer() != null) {
-            TextComponent serverNameComponent = new TextComponent(ChatColor.AQUA + serverName);
+            TextComponent serverNameComponent = new TextComponent(ChatColor.AQUA + serverName + "\n");
             serverNameComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/server " + serverName));
             infoMessage.addExtra(serverNameComponent);
         } else {
             infoMessage.addExtra(ChatColor.WHITE + serverName);
         }
 
+        long playtime = DatabasePlayers.getPlaytime(targetPlayer.getUniqueId().toString());
+        String formatted = formatPlaytime(playtime);
+        infoMessage.addExtra(ChatColor.YELLOW + "Playtime: " + ChatColor.WHITE + formatted);
+
         player.sendMessage(infoMessage);
+    }
+    private String formatPlaytime(long millis) {
+        long seconds = millis / 1000;
+        long minutes = (seconds / 60) % 60;
+        long hours = (seconds / 3600) % 24;
+        long days = seconds / 86400;
+
+        return String.format("%dd %02dh %02dm", days, hours, minutes);
     }
 
     @Override

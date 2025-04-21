@@ -9,6 +9,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.CommandSender;
+import org.bcnlab.beaconlabsproxy.Utils.UUIDFetcher;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -42,7 +43,7 @@ public class UidLookup extends Command {
         String playerName = args[0];
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try {
-                UUID uuid = getUUIDFromPlayerName(playerName);
+                UUID uuid = UUIDFetcher.getUUID(playerName);
 
                 if (uuid != null) {
                     TextComponent message = new TextComponent(ChatColor.GREEN + "The UUID of " + playerName + " is ");
@@ -59,33 +60,5 @@ public class UidLookup extends Command {
                 e.printStackTrace();
             }
         });
-    }
-
-    private UUID getUUIDFromPlayerName(String playerName) throws Exception {
-        String urlString = "https://api.mojang.com/users/profiles/minecraft/" + playerName;
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("Content-Type", "application/json");
-
-        if (connection.getResponseCode() != 200) {
-            return null;
-        }
-
-        InputStreamReader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8);
-        JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-        reader.close();
-
-        String uuidString = json.get("id").getAsString();
-        return parseUUIDFromString(uuidString);
-    }
-
-    private UUID parseUUIDFromString(String uuidString) {
-        String formattedUUID = uuidString.replaceFirst(
-                "(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{12})",
-                "$1-$2-$3-$4-$5"
-        );
-        return UUID.fromString(formattedUUID);
     }
 }

@@ -21,6 +21,7 @@ import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardListener;
 import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardManager;
 import org.bcnlab.beaconlabsproxy.ServerGuard.ServerPermissionsCommand;
 import org.bcnlab.beaconlabsproxy.LabsCommand;
+import org.bcnlab.beaconlabsproxy.InviteCommand;
 
 import java.io.File;
 import java.io.IOException;
@@ -95,6 +96,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new SkinCommand(this));
         proxy.getPluginManager().registerCommand(this, new JoinMeCommand(this));
         proxy.getPluginManager().registerCommand(this, new RequestServerJoinCommand(this));
+        proxy.getPluginManager().registerCommand(this, new InviteCommand(this));
         proxy.getPluginManager().registerCommand(this, new MaintenanceCommand(this));
         proxy.getPluginManager().registerCommand(this, new LobbyCommand(this));
         proxy.getPluginManager().registerCommand(this, new ProxyCommand(this));

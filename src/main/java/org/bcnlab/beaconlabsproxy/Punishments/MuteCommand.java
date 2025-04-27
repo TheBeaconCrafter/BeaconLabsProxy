@@ -21,33 +21,20 @@ import java.util.UUID;
 public class MuteCommand extends Command {
 
     private final BeaconLabsProxy plugin;
-    private static final String PERMISSION = "beaconlabs.mute";  // Define the required permission
+    private static final String PERMISSION = "beaconlabs.mute";
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final Webhooks webhooks;
 
     public MuteCommand(BeaconLabsProxy plugin) {
-        super("mute");
+        super("mute", PERMISSION);
         this.plugin = plugin;
         this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
-        if (!(commandSender instanceof ProxiedPlayer)) {
-            commandSender.sendMessage(new TextComponent(ChatColor.RED + "This command can only be executed by a player."));
-            return;
-        }
-
-        ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
-
+    public void execute(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /mute <player> <duration> <reason>"));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /mute <player> <duration> <reason>"));
             return;
         }
 
@@ -66,7 +53,7 @@ public class MuteCommand extends Command {
         String lastName = playerToMute != null ? playerToMute.getName() : null;
 
         if (uuid == null) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
             return;
         }
 
@@ -74,24 +61,23 @@ public class MuteCommand extends Command {
         LocalDateTime muteEnd = calculateMuteEnd(durationString);
 
         if (muteEnd == null) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Invalid duration format."));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Invalid duration format."));
             return;
         }
 
         long durationSeconds = Duration.between(now, muteEnd).getSeconds();
 
         // Save the mute to database with UUID and last name
-        addMuteToDatabase(uuid.toString(), lastName, player.getName(), reason, now, muteEnd);
+        addMuteToDatabase(uuid.toString(), lastName, sender.getName(), reason, now, muteEnd);
 
         // Send the mute webhook
-        sendMuteWebhook(playerName, reason, durationString, player.getName(), now, muteEnd);
+        sendMuteWebhook(playerName, reason, durationString, sender.getName(), now, muteEnd);
 
         // Inform staff and player
-        plugin.getLogger().info(player.getName() + " muted player " + playerName + " for " + durationString + " with reason: " + reason);
-        player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Player " + playerName + " has been muted for " + durationString + "."));
+        plugin.getLogger().info(sender.getName() + " muted player " + playerName + " for " + durationString + " with reason: " + reason);
+        sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Player " + playerName + " has been muted for " + durationString + "."));
 
-        // Optionally broadcast mute message to players with beaconlabs.staff.read.mute permission
-        broadcastMuteMessage(playerName, reason, player.getName(), now, muteEnd, (int) durationSeconds);
+        broadcastMuteMessage(playerName, reason, sender.getName(), now, muteEnd, (int) durationSeconds);
 
         sendMuteNotification(playerToMute, reason, muteEnd);
     }

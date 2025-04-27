@@ -27,23 +27,15 @@ public class ClearPunishmentsCommand extends Command {
     private final Webhooks webhooks;
 
     public ClearPunishmentsCommand(BeaconLabsProxy plugin) {
-        super("clearpunishments", "", "cpunish");
+        super("clearpunishments", PERMISSION, "cpunish");
         this.plugin = plugin;
         this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
-        ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
-
+    public void execute(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /clearpunishments <player>"));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /clearpunishments <player>"));
             return;
         }
 
@@ -54,18 +46,18 @@ public class ClearPunishmentsCommand extends Command {
                 UUID uuid = getUUIDFromPlayerName(playerName);
 
                 if (uuid == null) {
-                    player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
+                    sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
                     return;
                 }
 
                 // Delete all punishment records for the player
                 clearPunishments(uuid);
 
-                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "All punishments for player " + playerName + " have been cleared."));
-                webhooks.sendCpunishWebhook(playerName, player.getName());
+                sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "All punishments for player " + playerName + " have been cleared."));
+                webhooks.sendCpunishWebhook(playerName, sender.getName());
 
             } catch (Exception e) {
-                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while clearing punishments: " + e.getMessage()));
+                sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while clearing punishments: " + e.getMessage()));
                 e.printStackTrace();
             }
         });

@@ -47,6 +47,7 @@ public class WarnCommand extends Command implements TabExecutor {
         punishments.put("reportabuse", new PunishmentDetails("Report Abuse", 604800)); // 7 day ban
         punishments.put("skin", new PunishmentDetails("Skin", 604800)); // 7 day ban
         punishments.put("name", new PunishmentDetails("Name", 604800)); // 7 day ban
+        punishments.put("safety", new PunishmentDetails("Safety", 0)); // Permanent
     }
 
     @Override

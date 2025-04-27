@@ -25,7 +25,7 @@ import java.util.UUID;
 public class ChatReportCommand extends Command implements TabExecutor {
 
     private final FileChatLogger chatLogger;
-    private static final String PERMISSION = "beaconlabs.chatreport";  // Define the required permission
+    private static final String PERMISSION = "beaconlabs.chatreport";
     private static final String PASTEBIN_URL = "https://paste.md-5.net/documents";
     private final BeaconLabsProxy plugin;
 
@@ -36,14 +36,7 @@ public class ChatReportCommand extends Command implements TabExecutor {
     }
 
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
-        if (!(commandSender instanceof ProxiedPlayer)) {
-            commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Only players can use this command."));
-            return;
-        }
-
-        ProxiedPlayer sender = (ProxiedPlayer) commandSender;
-
+    public void execute(CommandSender sender, String[] args) {
         if (args.length != 1) {
             sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /chatreport <player>"));
             return;

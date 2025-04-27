@@ -14,9 +14,10 @@ import java.util.Collections;
 public class MaintenanceCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
+    private static final String PERMISSION = "beaconlabs.maintenance";  // Define the required permission
 
     public MaintenanceCommand(BeaconLabsProxy plugin) {
-        super("maintenance", "beaconlabs.maintenance");
+        super("maintenance", PERMISSION);
         this.plugin = plugin;
     }
 

@@ -9,9 +9,10 @@ import net.md_5.bungee.api.config.ServerInfo;
 public class LobbyCommand extends Command {
 
     private final BeaconLabsProxy plugin;
+    private static final String PERMISSION = "beaconlabs.lobby";  // Define the required permission
 
     public LobbyCommand(BeaconLabsProxy plugin) {
-        super("lobby", "beaconlabs.lobby", "l", "hub", "L", "Hub");
+        super("lobby", PERMISSION, "l", "hub", "L", "Hub");
         this.plugin = plugin;
     }
 

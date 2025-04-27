@@ -21,8 +21,8 @@ import java.util.Optional;
 public class MsgCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
-    private final LuckPerms luckPermsApi;  // LuckPerms API instance
-    private static final String PERMISSION = "beaconlabs.msg";  // Define the required permission
+    private final LuckPerms luckPermsApi;
+    private static final String PERMISSION = "beaconlabs.msg";
 
     public MsgCommand(BeaconLabsProxy plugin) {
         super("msg", PERMISSION, "message", "tell", "whisper");

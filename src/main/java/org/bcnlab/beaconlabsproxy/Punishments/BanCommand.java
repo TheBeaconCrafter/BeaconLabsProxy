@@ -27,27 +27,19 @@ import java.util.regex.Pattern;
 public class BanCommand extends Command implements TabExecutor {
 
     private final BeaconLabsProxy plugin;
-    private static final String PERMISSION = "beaconlabs.ban";  // Define the required permission
+    private static final String PERMISSION = "beaconlabs.ban";
     private final Webhooks webhooks;
 
     public BanCommand(BeaconLabsProxy plugin) {
-        super("ban");
+        super("ban", PERMISSION);
         this.plugin = plugin;
         this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
-        ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
-
+    public void execute(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /ban <player> <reason> [duration]"));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /ban <player> <reason> [duration]"));
             return;
         }
 
@@ -97,7 +89,7 @@ public class BanCommand extends Command implements TabExecutor {
             try {
                 uuid = getUUIDFromPlayerName(playerName);
             } catch (Exception e) {
-                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found."));
+                sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found."));
                 throw new RuntimeException(e);
             }
         }
@@ -106,10 +98,10 @@ public class BanCommand extends Command implements TabExecutor {
         LocalDateTime unbanDate = durationSeconds > 0 ? now.plusSeconds(durationSeconds) : null; // Calculate unban date if duration is specified
 
         // Save the ban to database with UUID and last name
-        PunishmentManager.addPunishment(uuid.toString(), lastName, player.getName(), "ban", reason, durationSeconds);
+        PunishmentManager.addPunishment(uuid.toString(), lastName, sender.getName(), "ban", reason, durationSeconds);
 
         // Broadcast the ban message
-        broadcastBanMessage(playerName, reason, player.getName(), now, unbanDate, durationSeconds);
+        broadcastBanMessage(playerName, reason, sender.getName(), now, unbanDate, durationSeconds);
 
         if (playerToBan != null && playerToBan.isConnected()) {
             // Get the ban message format from the plugin's configuration

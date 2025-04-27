@@ -19,10 +19,10 @@ import java.util.Set;
 public class TeamChatCommand extends Command {
 
     private final BeaconLabsProxy plugin;
-    private final LuckPerms luckPermsApi;  // LuckPerms API instance
-    private static final String PERMISSION = "beaconlabs.teamchat";  // Define the required permission
+    private final LuckPerms luckPermsApi;
+    private static final String PERMISSION = "beaconlabs.teamchat";
 
-    private static final Set<ProxiedPlayer> teamChatMembers = new HashSet<>();  // Set to hold team chat members
+    private static final Set<ProxiedPlayer> teamChatMembers = new HashSet<>();
 
     public TeamChatCommand(BeaconLabsProxy plugin) {
         super("teamchat", PERMISSION, "tc");

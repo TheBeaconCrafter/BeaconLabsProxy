@@ -14,16 +14,17 @@ import net.md_5.bungee.api.plugin.Command;
  */
 public class InviteCommand extends Command {
     private final BeaconLabsProxy plugin;
+    private static final String PERMISSION = "beaconlabs.invite";  // Define the required permission
 
     public InviteCommand(BeaconLabsProxy plugin) {
-        super("invite", "beaconlabs.invite");
+        super("invite", PERMISSION);
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (!(sender instanceof ProxiedPlayer) || !sender.hasPermission("beaconlabs.invite")) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You don't have permission to invite."));
+        if (!(sender instanceof ProxiedPlayer)) {
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You need to be a player to use invites."));
             return;
         }
         ProxiedPlayer inviter = (ProxiedPlayer) sender;

@@ -25,13 +25,6 @@ public class ViewReportsCommand extends Command {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (!(sender instanceof ProxiedPlayer)) {
-            sender.sendMessage(new TextComponent(ChatColor.RED + "Only players can use this command."));
-            return;
-        }
-
-        ProxiedPlayer player = (ProxiedPlayer) sender;
-
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
             try (Connection conn = DatabaseReports.getConnection()) {
                 if (conn != null && conn.isValid(3)) { // Check if the connection is valid within 3 seconds
@@ -39,11 +32,11 @@ public class ViewReportsCommand extends Command {
                     try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                         try (ResultSet rs = stmt.executeQuery()) {
                             if (!rs.isBeforeFirst()) {
-                                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "There are no open reports."));
+                                sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "There are no open reports."));
                                 return;
                             }
 
-                            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Active Reports:"));
+                            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Active Reports:"));
                             while (rs.next()) {
                                 int id = rs.getInt("id");
                                 String reporter = rs.getString("reporter");
@@ -76,15 +69,15 @@ public class ViewReportsCommand extends Command {
                                 reportComponent.addExtra(chatReportButton);
 
                                 // Send the formatted report to the player
-                                player.sendMessage(reportComponent);
+                                sender.sendMessage(reportComponent);
                             }
                         }
                     }
                 } else {
-                    player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Database connection is not valid."));
+                    sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Database connection is not valid."));
                 }
             } catch (SQLException e) {
-                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while retrieving reports."));
+                sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while retrieving reports."));
                 e.printStackTrace();
             }
         });

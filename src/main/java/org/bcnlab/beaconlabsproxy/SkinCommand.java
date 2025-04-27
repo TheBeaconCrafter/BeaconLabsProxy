@@ -11,9 +11,10 @@ import net.md_5.bungee.api.plugin.Command;
 public class SkinCommand extends Command {
 
     private final BeaconLabsProxy plugin;
+    private static final String PERMISSION = "beaconlabs.skin";
 
     public SkinCommand(BeaconLabsProxy plugin) {
-        super("skin", "beaconlabs.skin");
+        super("skin", PERMISSION);
         this.plugin = plugin;
     }
 

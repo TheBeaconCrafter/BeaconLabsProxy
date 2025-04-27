@@ -19,29 +19,24 @@ import java.util.UUID;
 public class UnbanIDCommand extends Command {
 
     private final BeaconLabsProxy plugin;
-    private static final String PERMISSION = "beaconlabs.unban";  // Define the required permission
+    private static final String PERMISSION = "beaconlabs.unban";
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final Webhooks webhooks;
 
     public UnbanIDCommand(BeaconLabsProxy plugin) {
-        super("unbanid");
+        super("unbanid", PERMISSION);
         this.plugin = plugin;
         this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
+    public void execute(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /unbanid <UUID>"));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /unbanid <UUID>"));
             return;
         }
 
-        if (!(commandSender instanceof ProxiedPlayer) || !commandSender.hasPermission(PERMISSION)) {
-            commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
-
-        ProxiedPlayer player = (ProxiedPlayer) commandSender;
+        ProxiedPlayer player = (ProxiedPlayer) sender;
         String uuidString = args[0];
 
         plugin.getProxy().getScheduler().runAsync(plugin, () -> {
@@ -61,7 +56,7 @@ public class UnbanIDCommand extends Command {
                 // Broadcast unban message to players with beaconlabs.staff.read.unban permission
                 for (ProxiedPlayer onlinePlayer : plugin.getProxy().getPlayers()) {
                     if (onlinePlayer.hasPermission("beaconlabs.staff.read.unban")) {
-                        onlinePlayer.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + uuidString + ChatColor.GRAY + " was unbanned by " + ChatColor.GOLD + commandSender.getName() + ChatColor.GRAY + "."));
+                        onlinePlayer.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + uuidString + ChatColor.GRAY + " was unbanned by " + ChatColor.GOLD + sender.getName() + ChatColor.GRAY + "."));
                     }
                 }
 
@@ -80,11 +75,10 @@ public class UnbanIDCommand extends Command {
         try {
             return UUID.fromString(uuidString);
         } catch (IllegalArgumentException e) {
-            return null; // Return null if UUID format is invalid
+            return null;
         }
     }
 
-    // Method to unban player (update original ban record and insert unban record)
     private void unbanPlayer(UUID uuid, String punisherName) {
         try (Connection conn = DatabasePunishments.getConnection()) {
             LocalDateTime now = LocalDateTime.now();

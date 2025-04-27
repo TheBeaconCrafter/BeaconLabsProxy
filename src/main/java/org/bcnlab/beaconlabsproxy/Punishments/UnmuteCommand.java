@@ -20,34 +20,21 @@ import java.util.UUID;
 public class UnmuteCommand extends Command {
 
     private final BeaconLabsProxy plugin;
-    private static final String PERMISSION = "beaconlabs.unmute";  // Define the required permission
+    private static final String PERMISSION = "beaconlabs.unmute";
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final Webhooks webhooks;
     LocalDateTime now = LocalDateTime.now();
 
     public UnmuteCommand(BeaconLabsProxy plugin) {
-        super("unmute");
+        super("unmute", PERMISSION);
         this.plugin = plugin;
         this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
-        if (!(commandSender instanceof ProxiedPlayer)) {
-            commandSender.sendMessage(new TextComponent(ChatColor.RED + "This command can only be executed by a player."));
-            return;
-        }
-
-        ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
-
+    public void execute(CommandSender sender, String[] args) {
         if (args.length < 1) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /unmute <player>"));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /unmute <player>"));
             return;
         }
 
@@ -56,19 +43,19 @@ public class UnmuteCommand extends Command {
         UUID uuid = playerToUnmute != null ? playerToUnmute.getUniqueId() : null;
 
         if (uuid == null) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + playerName + " not found or is offline."));
             return;
         }
 
         LocalDateTime now = LocalDateTime.now();
 
         // Update the mute record in the database
-        if (updateMuteRecord(uuid.toString(), now, player.getName())) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Player " + playerName + " has been unmuted."));
-            webhooks.sendUnmuteWebhook(playerName, player.getName());
-            broadcastUnmuteMessage(playerName, player.getName());
+        if (updateMuteRecord(uuid.toString(), now, sender.getName())) {
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.GREEN + "Player " + playerName + " has been unmuted."));
+            webhooks.sendUnmuteWebhook(playerName, sender.getName());
+            broadcastUnmuteMessage(playerName, sender.getName());
         } else {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Failed to unmute player " + playerName + "."));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Failed to unmute player " + playerName + "."));
         }
     }
 

@@ -33,7 +33,7 @@ public class PunishmentsCommand extends Command {
     private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss");
 
     public PunishmentsCommand(BeaconLabsProxy plugin) {
-        super("punishments", "", "ps");
+        super("punishments", PERMISSION, "ps");
         this.plugin = plugin;
     }
 
@@ -66,17 +66,10 @@ public class PunishmentsCommand extends Command {
     }
 
     @Override
-    public void execute(CommandSender commandSender, String[] args) {
-        ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
+    public void execute(CommandSender sender, String[] args) {
 
         if (args.length != 1) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /punishments <player>"));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /punishments <player>"));
             return;
         }
 
@@ -91,11 +84,11 @@ public class PunishmentsCommand extends Command {
                     try {
                         targetUUID = getUUIDFromPlayerName(targetName);
                         if (targetUUID == null) {
-                            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + targetName + " not found or is offline."));
+                            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Player " + targetName + " not found or is offline."));
                             return;
                         }
                     } catch (Exception e) {
-                        player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Failed to retrieve UUID for player " + targetName));
+                        sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Failed to retrieve UUID for player " + targetName));
                         e.printStackTrace();
                         return;
                     }
@@ -109,7 +102,7 @@ public class PunishmentsCommand extends Command {
 
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (!rs.next()) {
-                            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "No punishments found for player " + targetName + "."));
+                            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "No punishments found for player " + targetName + "."));
                             return;
                         }
 
@@ -143,11 +136,11 @@ public class PunishmentsCommand extends Command {
                             count++;
                         } while (rs.next());
 
-                        player.sendMessage(new TextComponent(punishmentsMessage.toString()));
+                        sender.sendMessage(new TextComponent(punishmentsMessage.toString()));
                     }
                 }
             } catch (SQLException e) {
-                player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while retrieving the punishments."));
+                sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "An error occurred while retrieving the punishments."));
                 e.printStackTrace();
             }
         });

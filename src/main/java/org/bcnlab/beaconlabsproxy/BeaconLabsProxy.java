@@ -38,7 +38,7 @@ import java.util.*;
 public final class BeaconLabsProxy extends Plugin implements Listener {
 
     private String prefix = "[BeaconLabs]";
-    private String versionNumber = "1.4";
+    private String versionNumber = "1.5";
     private File file;
     private Configuration configuration;
 

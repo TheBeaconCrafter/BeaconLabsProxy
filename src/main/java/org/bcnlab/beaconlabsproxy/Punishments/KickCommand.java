@@ -23,19 +23,13 @@ public class KickCommand extends Command implements TabExecutor {
     private static final String PERMISSION = "beaconlabs.kick";  // Define the required permission
 
     public KickCommand(BeaconLabsProxy plugin) {
-        super("kick");
+        super("kick", PERMISSION);
         this.plugin = plugin;
         this.webhooks = new Webhooks(this.plugin);
     }
 
     @Override
     public void execute(CommandSender commandSender, String[] args) {
-        // Check if the commandSender has the required permission
-        if (!commandSender.hasPermission(PERMISSION)) {
-            commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
-
         if (args.length < 2) {
             commandSender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "/kick <player> <reason>"));
             return;

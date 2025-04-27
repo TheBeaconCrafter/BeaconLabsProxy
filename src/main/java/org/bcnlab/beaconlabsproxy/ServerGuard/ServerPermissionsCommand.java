@@ -13,7 +13,7 @@ public class ServerPermissionsCommand extends Command {
     private final BeaconLabsProxy plugin;
 
     public ServerPermissionsCommand(BeaconLabsProxy plugin) {
-        super("serverperm", "beaconlabs.admin.serverperm");
+        super("serverperm", "beaconlabs.serverguard.admin", "sp");
         this.plugin = plugin;
     }
 
@@ -84,6 +84,10 @@ public class ServerPermissionsCommand extends Command {
         permissions.put(server.toLowerCase(), permission);
         ServerGuardManager.setServerPermissions(permissions);
         
+        // Sync to config
+        plugin.getConfiguration().set("serverguard.server-permissions." + server.toLowerCase(), permission);
+        plugin.saveConfig();
+        
         sender.sendMessage(new TextComponent(plugin.getPrefix() +
             ChatColor.GREEN + "Server " + server + " now requires permission: " + permission));
     }
@@ -94,6 +98,11 @@ public class ServerPermissionsCommand extends Command {
         
         if (removed != null) {
             ServerGuardManager.setServerPermissions(permissions);
+            
+            // Remove from config
+            plugin.getConfiguration().set("serverguard.server-permissions." + server.toLowerCase(), null);
+            plugin.saveConfig();
+            
             sender.sendMessage(new TextComponent(plugin.getPrefix() +
                 ChatColor.GREEN + "Permission requirement removed for server: " + server));
         } else {

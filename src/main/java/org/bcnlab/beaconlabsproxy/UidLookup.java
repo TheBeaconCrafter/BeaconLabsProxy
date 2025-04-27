@@ -23,7 +23,7 @@ public class UidLookup extends Command {
     private static final String PERMISSION = "beaconlabs.uid"; // Permission required to use the command
 
     public UidLookup(BeaconLabsProxy plugin) {
-        super("uidlookup", "", "uid");
+        super("uidlookup", PERMISSION, "uid");
         this.plugin = plugin;
     }
 
@@ -31,12 +31,6 @@ public class UidLookup extends Command {
     public void execute(CommandSender sender, String[] args) {
         if (args.length != 1) {
             sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /uid <player>"));
-            return;
-        }
-
-        // Check if the sender has the required permission
-        if (!(sender instanceof ProxiedPlayer) || !sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
             return;
         }
 

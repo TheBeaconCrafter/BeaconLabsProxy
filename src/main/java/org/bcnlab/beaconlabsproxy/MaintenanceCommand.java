@@ -16,7 +16,7 @@ public class MaintenanceCommand extends Command implements TabExecutor {
     private final BeaconLabsProxy plugin;
 
     public MaintenanceCommand(BeaconLabsProxy plugin) {
-        super("maintenance");
+        super("maintenance", "beaconlabs.maintenance");
         this.plugin = plugin;
     }
 
@@ -24,11 +24,6 @@ public class MaintenanceCommand extends Command implements TabExecutor {
     public void execute(CommandSender sender, String[] args) {
         if (args.length != 1) {
             sender.sendMessage(plugin.getPrefix() + ChatColor.RED + "Usage: /maintenance <on|off>");
-            return;
-        }
-
-        if (!sender.hasPermission("beaconlabs.maintenance")) {
-            sender.sendMessage(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command.");
             return;
         }
 

@@ -20,7 +20,7 @@ public class InfoCommand extends Command implements TabExecutor {
     private static final String PERMISSION = "beaconlabs.info";
 
     public InfoCommand(BeaconLabsProxy plugin) {
-        super("info", "", "check");
+        super("info", PERMISSION, "check");
         this.plugin = plugin;
     }
 
@@ -32,11 +32,6 @@ public class InfoCommand extends Command implements TabExecutor {
         }
 
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
 
         if (args.length != 1) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /info <player>"));

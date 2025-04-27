@@ -24,7 +24,7 @@ public class ReportCommand extends Command implements TabExecutor {
     private static final List<String> REASONS = Arrays.asList("HACKING", "SPAMMING", "INSULT", "CHATABUSE", "AUTOCLICKER");
 
     public ReportCommand(BeaconLabsProxy plugin) {
-        super("report");
+        super("report", PERMISSION);
         this.plugin = plugin;
     }
 
@@ -35,8 +35,8 @@ public class ReportCommand extends Command implements TabExecutor {
             return;
         }
 
-        if (!(sender instanceof ProxiedPlayer) || !sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
+        if (!(sender instanceof ProxiedPlayer)) {
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You need to be a player to execute this command."));
             return;
         }
 

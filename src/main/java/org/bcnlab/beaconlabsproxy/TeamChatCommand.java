@@ -25,7 +25,7 @@ public class TeamChatCommand extends Command {
     private static final Set<ProxiedPlayer> teamChatMembers = new HashSet<>();  // Set to hold team chat members
 
     public TeamChatCommand(BeaconLabsProxy plugin) {
-        super("teamchat", null, "tc");
+        super("teamchat", PERMISSION, "tc");
         this.plugin = plugin;
         this.luckPermsApi = LuckPermsProvider.get();
     }
@@ -38,12 +38,6 @@ public class TeamChatCommand extends Command {
         }
 
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
 
         if (args.length == 0) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /teamchat <message>"));

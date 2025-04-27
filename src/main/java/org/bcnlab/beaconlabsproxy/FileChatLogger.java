@@ -23,7 +23,7 @@ public class FileChatLogger implements Listener {
 
     public FileChatLogger(String logDirectory) {
         this.logDirectory = logDirectory;
-        clearLogs();  // Clear logs on initialization (optional, based on your preference)
+        clearLogs();  // Clear logs on initialization
     }
 
     // This method handles logging chat messages to a file

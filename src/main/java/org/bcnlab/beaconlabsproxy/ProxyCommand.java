@@ -19,7 +19,6 @@ public class ProxyCommand extends Command {
     @Override
     public void execute(CommandSender sender, String[] args) {
         ProxiedPlayer player = (ProxiedPlayer) sender;
-        // Check if the player has the required permission
         if (!player.hasPermission("beaconlabs.proxyinfo")) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
             return;

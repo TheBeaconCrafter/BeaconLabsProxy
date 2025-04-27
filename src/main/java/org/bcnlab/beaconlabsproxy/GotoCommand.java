@@ -17,7 +17,7 @@ public class GotoCommand extends Command implements TabExecutor {
     private static final String PERMISSION = "beaconlabs.goto";  // Define the required permission
 
     public GotoCommand(BeaconLabsProxy plugin) {
-        super("goto");
+        super("goto", PERMISSION);
         this.plugin = plugin;
     }
 
@@ -29,12 +29,6 @@ public class GotoCommand extends Command implements TabExecutor {
         }
 
         ProxiedPlayer player = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!player.hasPermission(PERMISSION)) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
 
         if (args.length != 1) {
             player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /goto <player>"));

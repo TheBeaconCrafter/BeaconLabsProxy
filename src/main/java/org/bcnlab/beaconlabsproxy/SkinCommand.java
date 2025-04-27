@@ -13,19 +13,12 @@ public class SkinCommand extends Command {
     private final BeaconLabsProxy plugin;
 
     public SkinCommand(BeaconLabsProxy plugin) {
-        super("skin");
+        super("skin", "beaconlabs.skin");
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        ProxiedPlayer player = (ProxiedPlayer) sender;
-
-        if (!player.hasPermission("beaconlabs.skin")) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
-
         if (args.length != 1) {
             sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED +  "Usage: /skin <username>"));
             return;

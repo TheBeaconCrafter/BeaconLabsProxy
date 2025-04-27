@@ -28,7 +28,7 @@ public class WhitelistCommand extends Command implements TabExecutor {
     private final Gson gson = new Gson();
 
     public WhitelistCommand(BeaconLabsProxy plugin) {
-        super("pwhitelist", "", "pwh", "proxywhitelist", "pwl");
+        super("pwhitelist", "beaconlabs.whitelist", "pwh", "proxywhitelist", "pwl");
         this.plugin = plugin;
         this.whitelistFile = new File(plugin.getDataFolder(), "whitelist.json");
         loadWhitelist();
@@ -38,11 +38,6 @@ public class WhitelistCommand extends Command implements TabExecutor {
     public void execute(CommandSender sender, String[] args) {
         if (args.length == 0 || args.length > 2) {
             sender.sendMessage(plugin.getPrefix() + ChatColor.RED + "Usage: /whitelist <on|off|add|remove|list> [player]");
-            return;
-        }
-
-        if (!sender.hasPermission("beaconlabs.whitelist")) {
-            sender.sendMessage(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command.");
             return;
         }
 

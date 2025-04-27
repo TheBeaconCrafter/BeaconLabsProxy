@@ -13,18 +13,18 @@ public class StaffCommand extends Command {
     private final BeaconLabsProxy plugin;
 
     public StaffCommand(BeaconLabsProxy plugin) {
-        super("staff", null, "team");
+        super("staff", "beaconlabs.visual.staff", "team");
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        ProxiedPlayer player = (ProxiedPlayer) sender;
-
-        if (!player.hasPermission("beaconlabs.visual.staff")) {
-            player.sendMessage(new TextComponent(ChatColor.RED + "You do not have permission to use this command."));
+        if (!(sender instanceof ProxiedPlayer)) {
+            sender.sendMessage(new TextComponent(ChatColor.RED + "Only players can use this command."));
             return;
         }
+
+        ProxiedPlayer player = (ProxiedPlayer) sender;
 
         Collection<ProxiedPlayer> onlinePlayers = plugin.getProxy().getPlayers();
         TextComponent staffList = new TextComponent(ChatColor.GREEN + "Staff Online:\n");

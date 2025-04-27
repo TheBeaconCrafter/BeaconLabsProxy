@@ -25,7 +25,7 @@ public class MsgCommand extends Command implements TabExecutor {
     private static final String PERMISSION = "beaconlabs.msg";  // Define the required permission
 
     public MsgCommand(BeaconLabsProxy plugin) {
-        super("msg", null, "message", "tell", "whisper");
+        super("msg", PERMISSION, "message", "tell", "whisper");
         this.plugin = plugin;
         this.luckPermsApi = LuckPermsProvider.get();
     }
@@ -38,12 +38,6 @@ public class MsgCommand extends Command implements TabExecutor {
         }
 
         ProxiedPlayer sender = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
 
         if (args.length < 2) {
             sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /msg <player> <message>"));

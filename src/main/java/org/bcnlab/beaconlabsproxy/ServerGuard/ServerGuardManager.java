@@ -27,6 +27,13 @@ public class ServerGuardManager {
         allowedServers.addAll(servers);
     }
 
+    /**
+     * Returns the set of configured allowed servers.
+     */
+    public static Set<String> getAllowedServers() {
+        return new HashSet<>(allowedServers);
+    }
+
     public static boolean isServerGuardEnabled() {
         return isServerGuardEnabled;
     }

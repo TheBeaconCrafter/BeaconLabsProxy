@@ -27,7 +27,7 @@ public class JoinMeCommand extends Command implements TabExecutor {
     private static final String PERMISSION = "beaconlabs.joinme";
 
     public JoinMeCommand(BeaconLabsProxy plugin) {
-        super("joinme");
+        super("joinme", PERMISSION);
         this.plugin = plugin;
         this.excludedServers = new HashSet<>();
         this.cooldowns = new HashMap<>();
@@ -38,11 +38,6 @@ public class JoinMeCommand extends Command implements TabExecutor {
     public void execute(CommandSender sender, String[] args) {
         if (!(sender instanceof ProxiedPlayer)) {
             sender.sendMessage(plugin.getPrefix() + ChatColor.RED + "This command can only be used by players.");
-            return;
-        }
-
-        if (!sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
             return;
         }
 

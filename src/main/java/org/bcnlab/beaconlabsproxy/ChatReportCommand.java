@@ -30,7 +30,7 @@ public class ChatReportCommand extends Command implements TabExecutor {
     private final BeaconLabsProxy plugin;
 
     public ChatReportCommand(FileChatLogger chatLogger, BeaconLabsProxy plugin) {
-        super("chatreport", null, "reportchat", "cr");
+        super("chatreport", PERMISSION, "reportchat", "cr");
         this.chatLogger = chatLogger;
         this.plugin = plugin;
     }
@@ -43,12 +43,6 @@ public class ChatReportCommand extends Command implements TabExecutor {
         }
 
         ProxiedPlayer sender = (ProxiedPlayer) commandSender;
-
-        // Check if the player has the required permission
-        if (!sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
-            return;
-        }
 
         if (args.length != 1) {
             sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "Usage: /chatreport <player>"));

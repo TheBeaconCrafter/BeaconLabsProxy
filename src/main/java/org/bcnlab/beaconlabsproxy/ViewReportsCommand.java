@@ -19,14 +19,14 @@ public class ViewReportsCommand extends Command {
     private static final String PERMISSION = "beaconlabs.viewreports";
 
     public ViewReportsCommand(BeaconLabsProxy plugin) {
-        super("viewreports", "", "reports");
+        super("viewreports", PERMISSION, "reports");
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (!(sender instanceof ProxiedPlayer) || !sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
+        if (!(sender instanceof ProxiedPlayer)) {
+            sender.sendMessage(new TextComponent(ChatColor.RED + "Only players can use this command."));
             return;
         }
 

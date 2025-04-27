@@ -21,14 +21,9 @@ public class ServerGuardListener implements Listener {
 
         if (!ServerGuardManager.isAllowed(player, targetServer)) {
             // Not allowed → cancel connection
-            plugin.getLogger().info(player.getName() + " tried to connect to " + targetServer + " but is not allowed.");
             event.setCancelled(true);
 
             player.sendMessage(plugin.getPrefix() + "§cYou are not allowed to join §e" + targetServer + "§c.");
-        }
-        else {
-            // Allowed → proceed
-            plugin.getLogger().info(player.getName() + " connected to " + targetServer);
         }
     }
 }

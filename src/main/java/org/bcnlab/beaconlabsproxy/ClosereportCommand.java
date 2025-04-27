@@ -17,14 +17,14 @@ public class ClosereportCommand extends Command {
     private static final String PERMISSION = "beaconlabs.closereport";
 
     public ClosereportCommand(BeaconLabsProxy plugin) {
-        super("closereport", "", "close");
+        super("closereport", PERMISSION, "close");
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (!(sender instanceof ProxiedPlayer) || !sender.hasPermission(PERMISSION)) {
-            sender.sendMessage(new TextComponent(plugin.getPrefix() + ChatColor.RED + "You do not have permission to use this command."));
+        if (!(sender instanceof ProxiedPlayer)) {
+            sender.sendMessage(new TextComponent(ChatColor.RED + "Only players can use this command."));
             return;
         }
 

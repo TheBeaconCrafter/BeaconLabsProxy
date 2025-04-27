@@ -10,16 +10,17 @@ import net.md_5.bungee.config.YamlConfiguration;
 import org.bcnlab.beaconlabsproxy.Database.DatabasePlayers;
 import org.bcnlab.beaconlabsproxy.Database.DatabasePunishments;
 import org.bcnlab.beaconlabsproxy.Database.DatabaseReports;
+import org.bcnlab.beaconlabsproxy.Database.ServerGuardDatabase;
 import org.bcnlab.beaconlabsproxy.Listeners.BackendKickListener;
 import org.bcnlab.beaconlabsproxy.Listeners.JoinListener;
 import org.bcnlab.beaconlabsproxy.Listeners.PingListener;
 import org.bcnlab.beaconlabsproxy.Listeners.PlaytimeListener;
 import org.bcnlab.beaconlabsproxy.Punishments.*;
-import org.bcnlab.beaconlabsproxy.Database.ServerGuardDatabase;
 import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardCommand;
 import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardListener;
 import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardManager;
 import org.bcnlab.beaconlabsproxy.ServerGuard.ServerPermissionsCommand;
+import org.bcnlab.beaconlabsproxy.LabsCommand;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +37,7 @@ import java.util.*;
 public final class BeaconLabsProxy extends Plugin implements Listener {
 
     private String prefix = "[BeaconLabs]";
-    private String versionNumber = "1.3";
+    private String versionNumber = "1.4";
     private File file;
     private Configuration configuration;
 
@@ -105,6 +106,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new PlaytimeCommand(this));
         proxy.getPluginManager().registerCommand(this, new ServerGuardCommand(this));
         proxy.getPluginManager().registerCommand(this, new ServerPermissionsCommand(this));
+        proxy.getPluginManager().registerCommand(this, new LabsCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -395,6 +397,56 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
 
         public String getReason() {
             return reason;
+        }
+    }
+
+    /**
+     * Reloads the configuration from disk and updates plugin settings.
+     */
+    public void reloadConfig() {
+        try {
+            configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
+        } catch (IOException e) {
+            getLogger().severe("Failed to reload config: " + e.getMessage());
+            return;
+        }
+        // Update prefix
+        prefix = ChatColor.translateAlternateColorCodes('&', configuration.getString("prefix", prefix));
+        // Update webhook URL
+        webhookUrl = configuration.getString("webhook.url", webhookUrl);
+        // Reload ServerGuard settings
+        boolean isServerGuardEnabled = configuration.getBoolean("serverguard.enabled", true);
+        Set<String> allowed = new HashSet<>(configuration.getStringList("serverguard.allowed-servers"));
+        Map<String, String> perms = new HashMap<>();
+        if (configuration.contains("serverguard.server-permissions")) {
+            Configuration permConfig = configuration.getSection("serverguard.server-permissions");
+            for (String srv : permConfig.getKeys()) {
+                String p = permConfig.getString(srv);
+                if (p != null && !p.isEmpty()) perms.put(srv.toLowerCase(), p);
+            }
+        }
+        if (configuration.contains("server-permissions")) {
+            Configuration permConfig = configuration.getSection("server-permissions");
+            for (String srv : permConfig.getKeys()) {
+                String p = permConfig.getString(srv);
+                if (p != null && !p.isEmpty()) perms.put(srv.toLowerCase(), p);
+            }
+        }
+        ServerGuardManager.setEnabled(isServerGuardEnabled);
+        ServerGuardManager.setAllowedServers(allowed);
+        ServerGuardManager.setServerPermissions(perms);
+        getLogger().info("Configuration reloaded.");
+    }
+
+    /** Accessors for configuration. */
+    public Configuration getConfiguration() { return configuration; }
+    public File getConfigFile() { return file; }
+    /** Saves the current configuration to disk. */
+    public void saveConfig() {
+        try {
+            ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, file);
+        } catch (IOException e) {
+            getLogger().severe("Failed to save config: " + e.getMessage());
         }
     }
 }

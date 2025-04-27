@@ -1,4 +1,4 @@
-package org.bcnlab.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy.Database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

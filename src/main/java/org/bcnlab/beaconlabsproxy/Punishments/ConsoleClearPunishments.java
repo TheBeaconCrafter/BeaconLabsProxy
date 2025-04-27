@@ -1,15 +1,16 @@
-package org.bcnlab.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy.Punishments;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import org.bcnlab.beaconlabsproxy.BeaconLabsProxy;
+import org.bcnlab.beaconlabsproxy.Database.DatabasePunishments;
+import org.bcnlab.beaconlabsproxy.Webhooks;
 
-import java.io.Console;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;

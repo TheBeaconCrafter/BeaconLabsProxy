@@ -1,4 +1,4 @@
-package org.bcnlab.beaconlabsproxy.ServerGuard;
+package org.bcnlab.beaconlabsproxy.Database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -24,6 +24,7 @@ public class ServerGuardDatabase {
                 "player_uuid TEXT NOT NULL," +
                 "server TEXT NOT NULL," +
                 "permanent BOOLEAN NOT NULL," +
+                "valid_until TIMESTAMP," +
                 "timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                 ")";
         try (Statement stmt = connection.createStatement()) {

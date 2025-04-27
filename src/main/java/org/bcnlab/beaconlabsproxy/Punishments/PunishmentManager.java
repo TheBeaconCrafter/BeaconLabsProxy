@@ -1,4 +1,6 @@
-package org.bcnlab.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy.Punishments;
+
+import org.bcnlab.beaconlabsproxy.Database.DatabasePunishments;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

@@ -7,7 +7,19 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.config.Configuration;
 import net.md_5.bungee.config.ConfigurationProvider;
 import net.md_5.bungee.config.YamlConfiguration;
+import org.bcnlab.beaconlabsproxy.Database.DatabasePlayers;
+import org.bcnlab.beaconlabsproxy.Database.DatabasePunishments;
+import org.bcnlab.beaconlabsproxy.Database.DatabaseReports;
 import org.bcnlab.beaconlabsproxy.Listeners.BackendKickListener;
+import org.bcnlab.beaconlabsproxy.Listeners.JoinListener;
+import org.bcnlab.beaconlabsproxy.Listeners.PingListener;
+import org.bcnlab.beaconlabsproxy.Listeners.PlaytimeListener;
+import org.bcnlab.beaconlabsproxy.Punishments.*;
+import org.bcnlab.beaconlabsproxy.Database.ServerGuardDatabase;
+import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardCommand;
+import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardListener;
+import org.bcnlab.beaconlabsproxy.ServerGuard.ServerGuardManager;
+import org.bcnlab.beaconlabsproxy.ServerGuard.ServerPermissionsCommand;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,9 +31,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public final class BeaconLabsProxy extends Plugin implements Listener {
 
@@ -46,6 +56,7 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         DatabaseReports.initialize();
         DatabasePunishments.initialize();
         DatabasePlayers.initialize();
+        ServerGuardDatabase.initialize();
 
         // Create an instance of WhitelistCommand
         WhitelistCommand whitelistCommand = new WhitelistCommand(this);
@@ -92,6 +103,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerCommand(this, new ClearChatLogs(this));
         proxy.getPluginManager().registerCommand(this, new ConsoleClearPunishments(this));
         proxy.getPluginManager().registerCommand(this, new PlaytimeCommand(this));
+        proxy.getPluginManager().registerCommand(this, new ServerGuardCommand(this));
+        proxy.getPluginManager().registerCommand(this, new ServerPermissionsCommand(this));
 
         getLogger().info("All commands were registered.");
 
@@ -103,7 +116,8 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
         proxy.getPluginManager().registerListener(this, new PingListener(this));
         proxy.getPluginManager().registerListener(this, new PlaytimeListener(this));
         proxy.getPluginManager().registerListener(this, new BackendKickListener(this));
-        ProxyServer.getInstance().getPluginManager().registerListener(this, chatLogger);
+        proxy.getPluginManager().registerListener(this, new ServerGuardListener(this));
+        proxy.getPluginManager().registerListener(this, chatLogger);
 
         getLogger().info("All listeners were registered.");
 
@@ -120,6 +134,12 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
                 configuration.set("prefix", "&6BeaconLabs &8» ");
                 configuration.set("maintenance", false);
                 configuration.set("whitelist", false);
+                configuration.set("serverguard.enabled", true);
+                configuration.set("serverguard.allowed-servers", new String[]{"lobby", "server1", "server2"});
+                
+                // Initialize server-specific permissions configuration
+                configuration.set("serverguard.server-permissions.creative", "beaconlabs.servers.creative");
+                configuration.set("serverguard.server-permissions.survival", "beaconlabs.servers.survival");
                 configuration.set("ban-message-format", "&c&oBanned by an Admin\n&7\n&cReason: %s\n&7\n&cUnban Date &8» &7%s\n&7\n&8Unban applications on Discord\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
                 configuration.set("kick-message-format", "&c&oKicked by an Admin\n&7\n&cReason: %s\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
                 configuration.set("maintenance-message-format", "&6&lServer currently in maintenance\n&7\n&cWe are working on getting the server back online!\n&7\n&eDiscord &8» &c&ndc.example.com\n&eWebsite &8» &c&eexample.com");
@@ -138,6 +158,45 @@ public final class BeaconLabsProxy extends Plugin implements Listener {
             configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(file);
             prefix = ChatColor.translateAlternateColorCodes('&', configuration.getString("prefix", "&6[BeaconLabs]&r "));
             webhookUrl = configuration.getString("webhook.url");
+
+            // Load Server Guard settings
+            boolean isServerGuardEnabled = configuration.getBoolean("serverguard.enabled", true);
+            String[] allowedServers = configuration.getStringList("serverguard.allowed-servers").toArray(new String[0]);
+            
+            // Load server-specific permission requirements
+            Map<String, String> serverPermissions = new HashMap<>();
+            
+            // First check under serverguard.server-permissions (correct format)
+            if (configuration.contains("serverguard.server-permissions")) {
+                Configuration permConfig = configuration.getSection("serverguard.server-permissions");
+                for (String server : permConfig.getKeys()) {
+                    String permission = permConfig.getString(server);
+                    if (permission != null && !permission.isEmpty()) {
+                        serverPermissions.put(server.toLowerCase(), permission);
+                    }
+                }
+            }
+            
+            // Also check at root level for backward compatibility
+            if (configuration.contains("server-permissions")) {
+                Configuration permConfig = configuration.getSection("server-permissions");
+                for (String server : permConfig.getKeys()) {
+                    String permission = permConfig.getString(server);
+                    if (permission != null && !permission.isEmpty()) {
+                        serverPermissions.put(server.toLowerCase(), permission);
+                    }
+                }
+            }
+
+            // Apply server guard settings
+            ServerGuardManager.setEnabled(isServerGuardEnabled);
+            ServerGuardManager.setAllowedServers(new HashSet<>(Arrays.asList(allowedServers)));
+            ServerGuardManager.setServerPermissions(serverPermissions);
+            getLogger().info("ServerGuard enabled: " + isServerGuardEnabled);
+            getLogger().info("Allowed Servers: " + String.join(", ", allowedServers));
+            if (!serverPermissions.isEmpty()) {
+                getLogger().info("Server-specific permissions configured: " + serverPermissions.size());
+            }
 
             getLogger().info("Webhook URL loaded: " + webhookUrl);
 

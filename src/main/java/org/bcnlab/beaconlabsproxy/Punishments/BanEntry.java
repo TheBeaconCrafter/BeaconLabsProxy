@@ -1,4 +1,4 @@
-package org.bcnlab.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy.Punishments;
 
 import java.time.LocalDateTime;
 

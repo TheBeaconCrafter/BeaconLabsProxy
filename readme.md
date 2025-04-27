@@ -13,6 +13,7 @@
 - **MOTD with dynamic text:** Configurable messages that can be displayed in server list descriptions.
 - **Team Chat:** Team Chat for all your staff members to talk.
 - **Permissions:** Provides fine-grained control over who can use each command and bypass maintenance mode.
+- **Serverguard:** Protect backend servers from unwanted connections by players (kind of like a whitelist, but with an invite system).
 - **Many more:** Including useful tools like /staff, /uid, /check, /punishments, /ping, /skin, /goto, /broadcast
 
 ## Commands

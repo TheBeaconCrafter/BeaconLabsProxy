@@ -1,4 +1,4 @@
-package org.bcnlab.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy.Punishments;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -6,6 +6,8 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+import org.bcnlab.beaconlabsproxy.BeaconLabsProxy;
+import org.bcnlab.beaconlabsproxy.Database.DatabasePunishments;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

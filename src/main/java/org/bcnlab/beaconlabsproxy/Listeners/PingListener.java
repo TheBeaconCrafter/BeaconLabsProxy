@@ -1,10 +1,11 @@
-package org.bcnlab.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy.Listeners;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ServerPing.Players;
 import net.md_5.bungee.api.event.ProxyPingEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
+import org.bcnlab.beaconlabsproxy.BeaconLabsProxy;
 
 import java.util.Random;
 

@@ -1,4 +1,4 @@
-package org.bcnlab.beaconlabsproxy;
+package org.bcnlab.beaconlabsproxy.Punishments;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -8,13 +8,12 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.TabExecutor;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bcnlab.beaconlabsproxy.BeaconLabsProxy;
 
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class WarnCommand extends Command implements TabExecutor {

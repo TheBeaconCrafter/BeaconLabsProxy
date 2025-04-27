@@ -6,6 +6,7 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
+import org.bcnlab.beaconlabsproxy.Database.DatabaseReports;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
